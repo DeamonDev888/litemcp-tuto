@@ -73,6 +73,17 @@ Ce tutoriel vous apprend à écrire le vôtre en Rust, en partant de zéro.
 > prêt à brancher sur n'importe quel agent IA. Le code complet est dans le
 > dossier [`mon-premier-mcp/`](./mon-premier-mcp) de ce dépôt.
 
+> 📚 **Deux tutos dans ce dépôt**
+>
+> | | Pour qui | Quoi |
+> |---|---|---|
+> | **1. Ce README** | vous, l'humain | construire le serveur et ses outils |
+> | **2. [`TUTO-AGENT.md`](TUTO-AGENT.md)** | votre agent IA | le mode d'emploi à lui donner : catalogue des outils, protocole d'erreurs, contrat de comportement |
+>
+> Une fois votre serveur construit, donnez `TUTO-AGENT.md` à votre agent
+> (context files Hermes, prompt système, `AGENTS.md`…) — il saura exactement
+> comment s'en servir.
+
 ---
 
 ## 🧰 C'est quoi un « outil » ?
@@ -724,6 +735,12 @@ journal — sans rien ajouter à votre code.
 Une fois branché, demandez simplement à votre agent :
 *« Analyse ce texte avec l'outil analyze »* — il découvrira tout seul comment
 l'appeler grâce au schéma publié par `tools/list`. C'est toute la magie de MCP.
+
+> 🤖 **Pour aller encore plus loin** : ce dépôt contient un second tuto écrit
+> **pour votre agent**, pas pour vous — [`TUTO-AGENT.md`](TUTO-AGENT.md).
+> Donnez-le lui (context files Hermes, prompt système, `AGENTS.md`) : il y
+> trouvera le catalogue des outils, le protocole d'erreurs à suivre et son
+> contrat de comportement. Vos appels d'agent deviennent propres et traçables.
 
 ---
 

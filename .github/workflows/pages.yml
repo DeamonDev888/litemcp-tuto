@@ -1,5 +1,7 @@
-# Site web du tuto (GitHub Pages) — généré depuis README.md, une seule source de vérité.
-# Le site publié : https://deamondev888.github.io/litemcp-tuto/
+# Site web du tuto (GitHub Pages) — deux pages générées depuis les deux tutos :
+#   index.html  <- README.md     (tuto humain)
+#   agent.html  <- TUTO-AGENT.md (mode d'emploi pour agent IA)
+# Une seule source de vérité par page ; les liens croisés sont réécrits.
 
 name: Site du tuto (Pages)
 
@@ -26,13 +28,9 @@ jobs:
       - name: Installer pandoc si absent
         run: command -v pandoc >/dev/null || (sudo apt-get update && sudo apt-get install -y pandoc)
 
-      - name: Générer le site (README.md -> index.html)
+      - name: Générer le site (README.md et TUTO-AGENT.md -> HTML)
         run: |
           mkdir -p site
-          # Le site a sa propre table des matières générée : on retire celle du README.
-          sed '/^## .*Table des matières/,/^---$/d' README.md > site/tuto.md
-          # Les liens vers le dossier d'exemple pointent vers le dépôt GitHub.
-          sed -i 's|](\./mon-premier-mcp)|](https://github.com/DeamonDev888/litemcp-tuto/tree/main/mon-premier-mcp)|g' site/tuto.md
           # Enveloppe de page (marges, largeur de lecture) + pied de page + retour en haut.
           cat > site/_avant.html <<'HTML'
           <div class="page">
@@ -45,6 +43,18 @@ jobs:
           </footer>
           <a class="haut" href="#" title="Retour en haut">↑</a>
           HTML
+
+          # Prépare une source : retire la table des matières du markdown
+          # (le site génère la sienne), réécrit les liens relatifs.
+          preparer () {
+            src="$1"; dst="$2"
+            sed '/^## .*Table des matières/,/^---$/d' "$src" > "$dst"
+            sed -i 's|](\./mon-premier-mcp)|](https://github.com/DeamonDev888/litemcp-tuto/tree/main/mon-premier-mcp)|g' "$dst"
+          }
+
+          # Page 1 : index.html (tuto humain)
+          preparer README.md site/tuto.md
+          sed -i 's|](TUTO-AGENT.md)|](agent.html)|g' site/tuto.md
           pandoc site/tuto.md \
             -f gfm+gfm_auto_identifiers -t html5 -s \
             --toc --toc-depth=2 \
@@ -55,10 +65,25 @@ jobs:
             --include-after-body site/_apres.html \
             -c style.css \
             -o site/index.html
+
+          # Page 2 : agent.html (mode d'emploi pour agent IA)
+          preparer TUTO-AGENT.md site/agent.md
+          sed -i 's|](README.md)|](index.html)|g; s|](TUTO-AGENT.md)|](agent.html)|g' site/agent.md
+          pandoc site/agent.md \
+            -f gfm+gfm_auto_identifiers -t html5 -s \
+            --toc --toc-depth=2 \
+            --highlight-style breezedark \
+            --metadata title="Mode d'emploi du serveur MCP — pour agent IA" \
+            --metadata lang=fr \
+            --include-before-body site/_avant.html \
+            --include-after-body site/_apres.html \
+            -c style.css \
+            -o site/agent.html
+
           cp style.css site/style.css
           # Images du README (captures d'écran) servies telles quelles
           [ -d assets ] && cp -r assets site/ || true
-          rm site/tuto.md site/_avant.html site/_apres.html
+          rm site/tuto.md site/agent.md site/_avant.html site/_apres.html
 
       - name: Configurer Pages
         uses: actions/configure-pages@v5

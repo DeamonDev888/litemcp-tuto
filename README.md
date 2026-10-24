@@ -390,10 +390,13 @@ sans rien ajouter à votre code).
 
 ### Installation
 
+C'est une application — on l'installe comme une application :
+
 1. Téléchargez la dernière release pour votre système sur la
    [page des releases](https://github.com/DeamonDev888/mcp-command-center/releases)
-   (ou compilez depuis les sources : `cargo run --release`) ;
-2. Lancez-le — l'interface s'ouvre sur **http://127.0.0.1:5090** (port suivant si occupé).
+   — un binaire natif : **rien à compiler, rien à installer à côté** ;
+2. Lancez l'exécutable téléchargé — l'interface s'ouvre sur
+   **http://127.0.0.1:5090** (port suivant si occupé).
 
 ### En faire une vraie app supervisée
 

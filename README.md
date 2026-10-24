@@ -4,7 +4,7 @@
   <p>Aucune connaissance de MCP requise. Si vous savez lancer un terminal, vous pouvez suivre.</p>
   <p>
     <img src="https://img.shields.io/badge/Rust-1.85%2B-DEA584?style=for-the-badge&logo=rust" alt="Rust 1.85+">
-    <img src="https://img.shields.io/badge/LiteMCP-0.5-2ECC71?style=for-the-badge" alt="LiteMCP 0.5">
+    <a href="https://crates.io/crates/litemcp"><img src="https://img.shields.io/crates/v/litemcp?style=for-the-badge&label=LiteMCP&color=2ECC71" alt="Dernière version litemcp sur crates.io"></a>
     <img src="https://img.shields.io/badge/Spec_MCP-2026--07--28-3fb950?style=for-the-badge" alt="Spec MCP 2026-07-28">
     <img src="https://img.shields.io/badge/niveau-d%C3%A9butant-F9D34C?style=for-the-badge" alt="Niveau débutant">
     <a href="https://github.com/DeamonDev888/litemcp"><img src="https://img.shields.io/github/stars/DeamonDev888/litemcp?style=for-the-badge&label=%E2%AD%90%20LiteMCP&color=2ECC71" alt="Étoilez LiteMCP sur GitHub"></a>
@@ -194,6 +194,11 @@ cargo fetch
 
 > 💡 `serde` et `serde_json` sont les **seules** dépendances que LiteMCP
 > embarque. Rien d'autre ne sera ajouté à votre projet.
+
+> 🔄 **La doc suit les versions** : le numéro ci-dessus est mis à jour
+> **automatiquement** — un workflow GitHub lit crates.io chaque semaine et
+> recompile l'exemple avant de modifier ce tuto ([`maj-version.yml`](.github/workflows/maj-version.yml)).
+> Le badge d'en-tête, lui, montre la version **en direct**.
 
 ---
 

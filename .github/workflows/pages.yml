@@ -33,15 +33,30 @@ jobs:
           sed '/^## .*Table des matières/,/^---$/d' README.md > site/tuto.md
           # Les liens vers le dossier d'exemple pointent vers le dépôt GitHub.
           sed -i 's|](\./mon-premier-mcp)|](https://github.com/DeamonDev888/litemcp-tuto/tree/main/mon-premier-mcp)|g' site/tuto.md
+          # Enveloppe de page (marges, largeur de lecture) + pied de page + retour en haut.
+          cat > site/_avant.html <<'HTML'
+          <div class="page">
+          HTML
+          cat > site/_apres.html <<'HTML'
+          </div>
+          <footer class="site-footer">
+            <p>Le code de ce tuto : <a href="https://github.com/DeamonDev888/litemcp-tuto">github.com/DeamonDev888/litemcp-tuto</a><br>
+               la lib : <a href="https://github.com/DeamonDev888/litemcp">LiteMCP</a> · site régénéré depuis le README à chaque push.</p>
+          </footer>
+          <a class="haut" href="#" title="Retour en haut">↑</a>
+          HTML
           pandoc site/tuto.md \
             -f gfm+gfm_auto_identifiers -t html5 -s \
             --toc --toc-depth=2 \
+            --highlight-style breezedark \
             --metadata title="Mon premier serveur MCP en Rust — le tuto LiteMCP" \
             --metadata lang=fr \
+            --include-before-body site/_avant.html \
+            --include-after-body site/_apres.html \
             -c style.css \
             -o site/index.html
           cp style.css site/style.css
-          rm site/tuto.md
+          rm site/tuto.md site/_avant.html site/_apres.html
 
       - name: Configurer Pages
         uses: actions/configure-pages@v5

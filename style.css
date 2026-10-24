@@ -1,132 +1,339 @@
-/* Feuille de style du site du tuto (GitHub Pages) — un seul document,
-   généré depuis README.md par pandoc (voir .github/workflows/pages.yml). */
+/* Feuille de style du site du tuto (GitHub Pages) — thème sombre « fond noir »,
+   accents verts LiteMCP. Généré depuis README.md par pandoc
+   (voir .github/workflows/pages.yml) : aucune dépendance, aucun JS. */
 
 :root {
-  --texte: #1f2328;
-  --texte-2: #59636e;
-  --fond: #ffffff;
-  --fond-2: #f6f8fa;
-  --bordure: #d1d9e0;
-  --accent: #1a7f37;
-  --accent-2: #2da44e;
-  --code-fond: #f6f8fa;
+  --fond: #05070a;          /* fond de page (noir profond) */
+  --carte: #0e1219;         /* fond des cartes (sommaire, hero) */
+  --carte-2: #131a26;       /* fond secondaire (th de tableaux) */
+  --code-fond: #0b0f16;     /* fond des blocs de code */
+  --texte: #e8eef5;
+  --texte-2: #a3b0c2;
+  --texte-3: #6e7d91;
+  --bordure: #1d2432;
+  --bordure-2: #2a3446;
+  --vert: #3fb950;
+  --vert-vif: #2ecc71;
+  --vert-doux: rgba(46, 204, 113, 0.12);
 }
 
 * { box-sizing: border-box; }
 
+html {
+  scroll-behavior: smooth;
+  scrollbar-color: #222b3a var(--fond);
+}
+
 body {
   margin: 0;
-  padding: 0;
-  font-family: -apple-system, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  background:
+    radial-gradient(1100px 480px at 50% -160px, rgba(46, 204, 113, 0.10), transparent 70%),
+    var(--fond);
   color: var(--texte);
-  background: var(--fond);
-  line-height: 1.65;
-  font-size: 16px;
+  font-family: -apple-system, "Segoe UI", "Inter", "Noto Sans", Helvetica, Arial, sans-serif;
+  font-size: 16.5px;
+  line-height: 1.72;
+  -webkit-font-smoothing: antialiased;
 }
 
-header.title-block,
-body > header {
+/* Le bloc titre de pandoc est masqué : le README a son propre en-tête (hero). */
+header#title-block-header { display: none; }
+
+/* Enveloppe de page : vraies marges, largeur de lecture confortable. */
+.page {
+  max-width: 53rem;
+  margin: 0 auto;
+  padding: 2rem 1.75rem 5rem;
+}
+
+/* ---------- Hero (le <div align="center"> en tête du README) ---------- */
+
+.page > div[align="center"] {
+  margin: 1.25rem 0 2.75rem;
+  padding: 3rem 1.5rem 2.6rem;
   text-align: center;
-  padding: 2.5rem 1rem 1.5rem;
+  border: 1px solid var(--bordure-2);
+  border-radius: 20px;
+  background:
+    radial-gradient(640px 220px at 50% 0%, rgba(46, 204, 113, 0.16), transparent 70%),
+    linear-gradient(180deg, #0f1521, #0a0e15);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
 }
 
-h1 {
-  font-size: 2rem;
-  margin: 0.5rem 0;
-  line-height: 1.25;
+.page > div[align="center"] h1 {
+  margin: 0.4rem 0 1rem;
+  font-size: 2.45rem;
+  line-height: 1.22;
+  letter-spacing: -0.5px;
+  text-shadow: 0 0 34px rgba(46, 204, 113, 0.35);
+}
+
+/* Le <font color> du README est prévu pour GitHub : le site le repeint. */
+.page > div[align="center"] h1 font { color: var(--vert-vif); }
+
+.page > div[align="center"] > p { margin: 0.55rem 0; }
+
+.page > div[align="center"] > p:first-of-type strong { color: #ffffff; }
+
+.page > div[align="center"] img {
+  margin: 0.25rem 0.15rem;
+  vertical-align: middle;
+}
+
+/* Le lien « version web » en pastille. */
+.page > div[align="center"] > p:last-child a {
+  display: inline-block;
+  padding: 0.4rem 1.05rem;
+  border: 1px solid var(--vert);
+  border-radius: 999px;
+  background: var(--vert-doux);
+  color: var(--vert-vif);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.page > div[align="center"] > p:last-child a:hover {
+  background: rgba(46, 204, 113, 0.22);
+  text-decoration: none;
+}
+
+/* ---------- Sommaire (nav#TOC générée par pandoc) ---------- */
+
+nav#TOC {
+  margin: 0 0 3rem;
+  padding: 1.4rem 1.75rem 1.5rem;
+  border: 1px solid var(--bordure);
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--carte), #0b0f16);
+}
+
+nav#TOC::before {
+  content: "Sommaire";
+  display: block;
+  margin-bottom: 0.6rem;
+  color: var(--texte-3);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+nav#TOC ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+nav#TOC > ul {
+  column-count: 2;
+  column-gap: 2.5rem;
+}
+
+nav#TOC li {
+  break-inside: avoid;
+  margin: 0.14rem 0;
+}
+
+nav#TOC ul ul {
+  padding-left: 1.1rem;
+  font-size: 0.92em;
+}
+
+nav#TOC a { color: var(--texte-2); }
+nav#TOC a:hover { color: var(--vert-vif); text-decoration: none; }
+
+/* ---------- Titres ---------- */
+
+h2, h3, h4 {
+  scroll-margin-top: 1.25rem;
+  color: #f2f6fa;
+  font-weight: 700;
 }
 
 h2 {
-  margin-top: 2.5rem;
-  padding-bottom: 0.3rem;
+  margin: 3.2rem 0 1.1rem;
+  padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--bordure);
-  font-size: 1.5rem;
+  font-size: 1.55rem;
+  line-height: 1.3;
 }
 
-h3 { font-size: 1.2rem; margin-top: 1.8rem; }
-
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-main {
-  max-width: 52rem;
-  margin: 0 auto;
-  padding: 0 1.25rem 4rem;
+h3 {
+  margin: 2.1rem 0 0.8rem;
+  font-size: 1.2rem;
 }
 
-/* Table des matières générée par pandoc */
-nav#TOC {
-  background: var(--fond-2);
-  border: 1px solid var(--bordure);
-  border-radius: 10px;
-  padding: 1rem 1.5rem;
-  margin: 1.5rem 0 2.5rem;
-}
-nav#TOC ul { list-style: none; padding-left: 1rem; margin: 0.25rem 0; }
-nav#TOC > ul { padding-left: 0; }
-nav#TOC a { color: var(--texte); }
-nav#TOC a:hover { color: var(--accent); }
+h4 { margin: 1.6rem 0 0.6rem; font-size: 1.02rem; }
 
-/* Badges shields.io du header */
-img { max-width: 100%; }
-header img { margin: 0 2px; }
-
-code, pre, kbd {
-  font-family: ui-monospace, "Cascadia Code", Consolas, Menlo, monospace;
-  font-size: 0.9em;
+h2::before {
+  content: "";
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.65rem;
+  margin-bottom: 0.08rem;
+  border-radius: 2px;
+  background: var(--vert-vif);
+  box-shadow: 0 0 14px rgba(46, 204, 113, 0.55);
 }
 
-code {
-  background: var(--code-fond);
-  border-radius: 4px;
-  padding: 0.15em 0.35em;
-}
+/* ---------- Texte ---------- */
 
-pre {
-  background: var(--code-fond);
-  border: 1px solid var(--bordure);
-  border-radius: 8px;
-  padding: 0.9rem 1rem;
-  overflow-x: auto;
-  line-height: 1.5;
-}
-pre code { background: none; padding: 0; }
+p { margin: 1rem 0; }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 1.25rem 0;
-  display: block;
-  overflow-x: auto;
-}
-th, td {
-  border: 1px solid var(--bordure);
-  padding: 0.45rem 0.75rem;
-  text-align: left;
-  vertical-align: top;
-}
-th { background: var(--fond-2); }
+a { color: var(--vert-vif); text-decoration: none; }
+a:hover { color: var(--vert); text-decoration: underline; }
 
-blockquote {
-  margin: 1.25rem 0;
-  padding: 0.5rem 1.25rem;
-  border-left: 4px solid var(--accent-2);
-  background: var(--fond-2);
-  border-radius: 0 8px 8px 0;
-  color: var(--texte-2);
-}
-blockquote strong { color: var(--texte); }
+strong { color: #ffffff; }
 
 hr {
   border: none;
-  border-top: 1px solid var(--bordure);
-  margin: 2.5rem 0;
+  height: 1px;
+  margin: 3rem 0;
+  background: linear-gradient(90deg, transparent, var(--bordure-2), transparent);
 }
 
-footer {
-  text-align: center;
+ul, ol { padding-left: 1.6rem; }
+li { margin: 0.3rem 0; }
+li > p { margin: 0.35rem 0; }
+
+blockquote {
+  margin: 1.5rem 0;
+  padding: 0.85rem 1.4rem;
+  border-left: 4px solid var(--vert);
+  border-radius: 0 12px 12px 0;
+  background: linear-gradient(90deg, rgba(46, 204, 113, 0.08), rgba(46, 204, 113, 0.02));
   color: var(--texte-2);
-  font-size: 0.85rem;
-  padding: 1.5rem;
+}
+blockquote strong { color: var(--vert-vif); }
+blockquote a { color: var(--vert-vif); }
+
+img { max-width: 100%; }
+
+::selection { background: rgba(46, 204, 113, 0.35); color: #ffffff; }
+
+/* ---------- Code ---------- */
+
+code, pre, kbd, samp {
+  font-family: ui-monospace, "Cascadia Code", "Cascadia Mono", Consolas, Menlo, monospace;
+  font-size: 0.88em;
+}
+
+/* code en ligne */
+p code, li code, td code, h2 code, h3 code, blockquote code {
+  padding: 0.12em 0.42em;
+  border: 1px solid var(--bordure);
+  border-radius: 6px;
+  background: #121826;
+  color: #9fe0b2;
+  word-break: break-word;
+}
+
+pre {
+  margin: 1.4rem 0;
+  padding: 1.05rem 1.25rem;
+  border: 1px solid var(--bordure);
+  border-radius: 12px;
+  background: var(--code-fond);
+  overflow-x: auto;
+  line-height: 1.6;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--texte);
+  font-size: 0.92em;
+}
+
+/* Les sorties en commentaire (# → ...) ressortent en vert doux. */
+
+/* ---------- Tableaux ---------- */
+
+table {
+  display: block;
+  width: 100%;
+  margin: 1.6rem 0;
+  border-collapse: collapse;
+  overflow-x: auto;
+  border: 1px solid var(--bordure);
+  border-radius: 12px;
+}
+
+th, td {
+  padding: 0.55rem 0.9rem;
+  border-bottom: 1px solid var(--bordure);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--carte-2);
+  color: #d7e2ee;
+  font-size: 0.88em;
+}
+
+tr:last-child td { border-bottom: none; }
+
+tbody tr:hover { background: rgba(46, 204, 113, 0.04); }
+
+/* ---------- Pied de page + bouton retour en haut ---------- */
+
+.site-footer {
+  max-width: 53rem;
+  margin: 0 auto;
+  padding: 1.6rem 1.75rem 2.8rem;
   border-top: 1px solid var(--bordure);
+  color: var(--texte-3);
+  font-size: 0.88rem;
+  text-align: center;
+}
+.site-footer a { color: var(--texte-2); }
+.site-footer a:hover { color: var(--vert-vif); }
+
+.haut {
+  position: fixed;
+  right: 1.4rem;
+  bottom: 1.4rem;
+  z-index: 10;
+  width: 2.7rem;
+  height: 2.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--bordure-2);
+  border-radius: 50%;
+  background: rgba(14, 18, 25, 0.92);
+  color: var(--vert-vif);
+  font-size: 1.1rem;
+  text-decoration: none;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+}
+.haut:hover {
+  border-color: var(--vert);
+  background: var(--vert-doux);
+  text-decoration: none;
+}
+
+/* ---------- Barre de défilement (WebKit) ---------- */
+
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--fond); }
+::-webkit-scrollbar-thumb {
+  background: #222b3a;
+  border: 3px solid var(--fond);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: #2e3a4e; }
+
+/* ---------- Petits écrans ---------- */
+
+@media (max-width: 780px) {
+  .page { padding: 1.25rem 1.1rem 4rem; }
+  .page > div[align="center"] { padding: 2.2rem 1.1rem 2rem; border-radius: 16px; }
+  .page > div[align="center"] h1 { font-size: 1.85rem; }
+  nav#TOC > ul { column-count: 1; }
+  h2 { font-size: 1.3rem; }
+  table { border-radius: 10px; }
 }

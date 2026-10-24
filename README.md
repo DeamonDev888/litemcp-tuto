@@ -25,7 +25,7 @@
 - [🚀 Étape 1 — Créer le projet](#-étape-1--créer-le-projet)
 - [📦 Étape 2 — Installer LiteMCP](#-étape-2--installer-litemcp)
 - [✍️ Étape 3 — Votre premier outil](#️-étape-3--votre-premier-outil)
-- [▶️ Étape 4 — Lancer le serveur](#️-étape-4--lancer-le-serveur)
+- [▶️ Étape 4 — Compiler et lancer votre application](#️-étape-4--compiler-et-lancer-votre-application)
 - [🧪 Étape 5 — Tester avec curl](#-étape-5--tester-avec-curl)
 - [🔍 Étape 6 — MCP Command Center (client visuel)](#-étape-6--mcp-command-center-client-visuel)
 - [🛡️ Étape 7 — Des outils qui se protègent tout seuls](#️-étape-7--des-outils-qui-se-protègent-tout-seuls)
@@ -67,10 +67,11 @@ langage, sur n'importe quelle machine.
 Un **serveur MCP** est donc juste un petit programme qui **expose des outils**.
 Ce tutoriel vous apprend à écrire le vôtre en Rust, en partant de zéro.
 
-> 💡 **À la fin de ce tuto** vous aurez un serveur qui tourne avec 4 outils
-> (bonjour, analyse de texte, division, compteur), testé et prêt à brancher
-> sur n'importe quel client MCP. Le code complet est dans le dossier
-> [`mon-premier-mcp/`](./mon-premier-mcp) de ce dépôt.
+> 💡 **À la fin de ce tuto** vous aurez **votre application MCP** : un binaire
+> unique avec 4 outils (bonjour, analyse de texte, division, compteur),
+> compilé en release, supervisé comme une vraie app par le Command Center et
+> prêt à brancher sur n'importe quel agent IA. Le code complet est dans le
+> dossier [`mon-premier-mcp/`](./mon-premier-mcp) de ce dépôt.
 
 ---
 
@@ -246,23 +247,43 @@ L'outil `hello` est né. Passons au test.
 
 ---
 
-## ▶️ Étape 4 — Lancer le serveur
+## ▶️ Étape 4 — Compiler et lancer votre application
+
+Comme une vraie application : on compile une **version de production** (release)
+et on lance le binaire.
 
 ```bash
-cargo run
+cargo build --release
+```
+
+Cargo produit **un fichier unique — votre application** :
+
+| Système | Binaire |
+|---|---|
+| Windows | `target\release\mon-premier-mcp.exe` |
+| Linux / macOS | `target/release/mon-premier-mcp` |
+
+Lancez-le — double-clic, ou depuis le terminal :
+
+```bash
+# Windows
+target\release\mon-premier-mcp.exe
+# Linux / macOS
+./target/release/mon-premier-mcp
 ```
 
 ```
-   Compiling mon-premier-mcp v0.1.0
-    Finished `dev` profile
-     Running `target\debug\mon-premier-mcp.exe`
 Mon premier MCP écoute sur http://127.0.0.1:8080/mcp
 ```
 
-Le serveur tourne. **Laissez ce terminal ouvert** — si vous le fermez, le
-serveur s'arrête. Ouvrez un **second** terminal pour la suite.
+Votre app tourne dans sa fenêtre : **un seul fichier, aucune dépendance à
+installer**, copiable tel quel sur une autre machine. Laissez la fenêtre
+ouverte ; `Ctrl+C` (ou fermer la fenêtre) arrête l'app.
 
-> 💡 Besoin d'arrêter le serveur ? `Ctrl+C` dans son terminal.
+> 💡 Pendant le développement, `cargo run` fait tout en un (compile en debug +
+> lance) — pratique pour itérer vite. La version **release** est celle que vous
+> distribuez : optimisée, démarrage instantané, binaire léger. C'est elle que
+> nous utiliserons maintenant.
 
 ---
 
@@ -270,6 +291,11 @@ serveur s'arrête. Ouvrez un **second** terminal pour la suite.
 
 Un client MCP parle au serveur en JSON-RPC : une requête `POST` sur `/mcp`
 avec un objet JSON qui dit ce qu'il veut. Testons les deux requêtes fondamentales.
+
+> 🤫 **Sous le capot uniquement** : l'adresse et le port sont des détails
+> internes de votre app. Vous ne les écrirez jamais à la main dans un vrai
+> usage — les clients (Command Center, agents IA) s'en chargent. Cette étape
+> sert juste à **voir** la mécanique une fois, pour ne plus jamais la subir.
 
 ### Appeler un outil : `tools/call`
 
@@ -369,15 +395,29 @@ sans rien ajouter à votre code).
    (ou compilez depuis les sources : `cargo run --release`) ;
 2. Lancez-le — l'interface s'ouvre sur **http://127.0.0.1:5090** (port suivant si occupé).
 
-### Ajouter votre serveur
+### En faire une vraie app supervisée
 
-Votre serveur tourne sur le port 8080. Dans le panneau de gauche de l'interface :
+Le Command Center peut **lancer et arrêter votre application lui-même** —
+plus besoin d'ouvrir un terminal ni de recopier la moindre adresse. Vous
+pouvez fermer la fenêtre de l'étape 4 : le Command Center prend le relais.
 
-1. Cliquez sur **« + Ajouter un serveur »** ;
-2. **Transport** : `HTTP (streamable)` ;
-3. **Nom affiché** : `mon-premier-mcp` ;
-4. **Port** : `8080` — **Chemin MCP** : `/mcp` (déjà prérempli) ;
+Dans le panneau de gauche, cliquez sur **« + Ajouter un serveur »** :
+
+1. **Transport** : `HTTP (streamable)` ;
+2. **Nom affiché** : `mon-premier-mcp` ;
+3. **Port** : `8080` — **Chemin MCP** : `/mcp` (déjà prérempli) ;
+4. **Commande de lancement** — c'est ici que votre app devient une vraie app :
+   * **Programme** : le chemin du binaire compilé à l'étape 4
+     (`target\release\mon-premier-mcp.exe` sous Windows,
+     `./target/release/mon-premier-mcp` sous Linux/macOS) ;
+   * **Workdir** (option) : le dossier de votre projet ;
 5. Cliquez sur **« Ajouter & sonder »**.
+
+La carte apparaît avec des boutons **Start / Stop** : le Command Center
+démarre votre app, la **relance si elle plante** (flag `auto_restart`), et
+peut la lancer au démarrage de la machine. Le port et l'adresse restent des
+détails internes — tout se pilote depuis l'interface, **comme une vraie
+application**.
 
 > 💡 Le bouton **« 🔍 Scanner les ports locaux »** découvre tout seul les serveurs MCP de la
 > plage configurée (3000-3200 par défaut) — élargissez-la dans les réglages si vos serveurs
@@ -454,7 +494,8 @@ Puis dans la chaîne du `ServerBuilder`, juste après le bloc `.tool(...)` :
         )
 ```
 
-Relancez le serveur (`Ctrl+C` puis `cargo run`) et testez :
+Relancez l'app pour prendre en compte le nouvel outil (`Ctrl+C`, puis relancez
+le binaire — ou simplement `cargo run` tant que vous développez) et testez :
 
 ```bash
 curl -s http://127.0.0.1:8080/mcp \
@@ -639,8 +680,10 @@ Types supportés : entiers, `f32`/`f64`, `bool`, `String`, `Option<T>`
 
 ## 🤖 Étape finale — Connecter un vrai client IA
 
-Votre serveur tourne en HTTP sur `http://127.0.0.1:8080/mcp` — n'importe quel
-client MCP capable de pointer sur une URL peut s'y brancher.
+Votre app tourne (idéalement supervisée par le Command Center). Pour brancher
+un agent IA, vous écrivez **une seule fois** où elle se trouve — après quoi
+l'agent découvre tout seul vos outils : vous ne manipulez plus jamais
+d'adresse ni de JSON.
 
 ### Claude Desktop / Claude Code
 
@@ -679,7 +722,7 @@ l'appeler grâce au schéma publié par `tools/list`. C'est toute la magie de MC
 
 * **Le code complet** de ce tuto (les 4 outils + annotations, prêt à compiler) :
   dossier [`mon-premier-mcp/`](./mon-premier-mcp) de ce dépôt — il accepte en
-  plus une adresse en argument (`cargo run -- 127.0.0.1:8180`) si le port
+  plus une adresse en argument (`mon-premier-mcp.exe 127.0.0.1:8180`) si le port
   8080 est déjà occupé sur votre machine ;
 * **Options du serveur** (chemin de route, timeouts, plafond de connexions,
   arrêt propre) : [README LiteMCP, section Configuration](https://github.com/DeamonDev888/litemcp#configuration) ;
@@ -702,7 +745,7 @@ l'appeler grâce au schéma publié par `tools/list`. C'est toute la magie de MC
   WantedBy=multi-user.target
   ```
 
-  (compilez avec `cargo build --release` pour le binaire de production) ;
+  (le binaire release compilé à l'[étape 4](#️-étape-4--compiler-et-lancer-votre-application), copié sur le serveur) ;
 * **Exemple de référence** : le serveur démo de validation de LiteMCP
   ([`litemcp-it`](https://github.com/DeamonDev888/litemcp-it)) — mêmes outils
   que ce tuto, avec 12 tests d'intégration sur de vraies sockets.

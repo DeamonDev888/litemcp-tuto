@@ -432,6 +432,12 @@ application**.
 | Compteur **`4`** à côté du nom | vos quatre outils, découverts via `tools/list` |
 | Détail de la carte | la liste complète (`hello`, `analyze`, `divide`, `counter`), la latence, le journal temps réel |
 
+<p align="center">
+  <img src="assets/command-center.png" alt="Le serveur du tuto vu dans MCP Command Center" width="820">
+</p>
+<p align="center"><i>Le serveur <code>mon-premier-mcp</code> supervisé par le Command Center :
+badge <b>LiteMCP</b>, puce <b>RS</b> (Rust), <b>4 outils</b> listés, boutons Start/Stop.</i></p>
+
 Vous venez de reproduire exactement ce que fera un agent IA quand il découvrira votre serveur —
 mais avec des cartes et des boutons au lieu de JSON. Et contrairement à un test ponctuel, le
 Command Center **continue de superviser** : état, latence et journal en continu, sur toutes vos

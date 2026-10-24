@@ -223,6 +223,17 @@ blockquote a { color: var(--vert-vif); }
 
 img { max-width: 100%; }
 
+/* Captures d'écran centrées (ex. Command Center) */
+.page p[align="center"] img {
+  border: 1px solid var(--bordure-2);
+  border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+}
+.page p[align="center"] i {
+  color: var(--texte-2);
+  font-size: 0.9rem;
+}
+
 ::selection { background: rgba(46, 204, 113, 0.35); color: #ffffff; }
 
 /* ---------- Code ---------- */

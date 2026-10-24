@@ -56,6 +56,8 @@ jobs:
             -c style.css \
             -o site/index.html
           cp style.css site/style.css
+          # Images du README (captures d'écran) servies telles quelles
+          [ -d assets ] && cp -r assets site/ || true
           rm site/tuto.md site/_avant.html site/_apres.html
 
       - name: Configurer Pages

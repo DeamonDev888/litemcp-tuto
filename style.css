@@ -80,8 +80,9 @@ header#title-block-header { display: none; }
   vertical-align: middle;
 }
 
-/* Le lien « version web » en pastille. */
-.page > div[align="center"] > p:last-child a {
+/* Les pastilles du hero (« version web » et « étoile sur la lib »). */
+.page > div[align="center"] > p:last-child a,
+.page > div[align="center"] > p:nth-last-child(2) a {
   display: inline-block;
   padding: 0.4rem 1.05rem;
   border: 1px solid var(--vert);
@@ -91,9 +92,22 @@ header#title-block-header { display: none; }
   font-weight: 600;
   font-size: 0.92rem;
 }
-.page > div[align="center"] > p:last-child a:hover {
+.page > div[align="center"] > p:last-child a:hover,
+.page > div[align="center"] > p:nth-last-child(2) a:hover {
   background: rgba(46, 204, 113, 0.22);
   text-decoration: none;
+}
+
+/* La pastille « ⭐ étoile sur la lib » : dorée, impossible à manquer. */
+.page a.etoile {
+  border-color: #e3b341;
+  background: rgba(227, 179, 65, 0.14);
+  color: #f0cc5e;
+}
+.page a.etoile:hover {
+  border-color: #f0cc5e;
+  background: rgba(227, 179, 65, 0.26);
+  color: #ffd969;
 }
 
 /* ---------- Sommaire (nav#TOC générée par pandoc) ---------- */

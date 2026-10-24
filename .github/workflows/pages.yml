@@ -41,7 +41,7 @@ jobs:
           </div>
           <footer class="site-footer">
             <p>Le code de ce tuto : <a href="https://github.com/DeamonDev888/litemcp-tuto">github.com/DeamonDev888/litemcp-tuto</a><br>
-               la lib : <a href="https://github.com/DeamonDev888/litemcp">LiteMCP</a> · site régénéré depuis le README à chaque push.</p>
+               la lib : <a href="https://github.com/DeamonDev888/litemcp">LiteMCP</a> — <a href="https://github.com/DeamonDev888/litemcp">⭐ mettez-lui une étoile</a>, c'est ce qui la fait vivre · site régénéré depuis le README à chaque push.</p>
           </footer>
           <a class="haut" href="#" title="Retour en haut">↑</a>
           HTML

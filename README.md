@@ -7,8 +7,11 @@
     <img src="https://img.shields.io/badge/LiteMCP-0.5-2ECC71?style=for-the-badge" alt="LiteMCP 0.5">
     <img src="https://img.shields.io/badge/Spec_MCP-2026--07--28-3fb950?style=for-the-badge" alt="Spec MCP 2026-07-28">
     <img src="https://img.shields.io/badge/niveau-d%C3%A9butant-F9D34C?style=for-the-badge" alt="Niveau débutant">
+    <a href="https://github.com/DeamonDev888/litemcp"><img src="https://img.shields.io/github/stars/DeamonDev888/litemcp?style=for-the-badge&label=%E2%AD%90%20LiteMCP&color=2ECC71" alt="Étoilez LiteMCP sur GitHub"></a>
   </p>
   <p>📖 <strong>Version web de ce tuto</strong> : <a href="https://deamondev888.github.io/litemcp-tuto/">deamondev888.github.io/litemcp-tuto</a></p>
+  <p>⭐ Si ce tuto vous aide, la plus belle façon de dire merci :
+     <a href="https://github.com/DeamonDev888/litemcp" class="etoile">mettez une <strong>étoile à la lib LiteMCP</strong></a> — c'est gratuit, et c'est ce qui la fait vivre. Merci !</p>
 </div>
 
 ---
@@ -24,7 +27,7 @@
 - [✍️ Étape 3 — Votre premier outil](#️-étape-3--votre-premier-outil)
 - [▶️ Étape 4 — Lancer le serveur](#️-étape-4--lancer-le-serveur)
 - [🧪 Étape 5 — Tester avec curl](#-étape-5--tester-avec-curl)
-- [🔍 Étape 6 — L'Inspecteur MCP (client visuel)](#-étape-6--linspecteur-mcp-client-visuel)
+- [🔍 Étape 6 — MCP Command Center (client visuel)](#-étape-6--mcp-command-center-client-visuel)
 - [🛡️ Étape 7 — Des outils qui se protègent tout seuls](#️-étape-7--des-outils-qui-se-protègent-tout-seuls)
 - [⚠️ Étape 8 — Gérer les erreurs](#️-étape-8--gérer-les-erreurs)
 - [🧠 Étape 9 — Un outil avec de la mémoire](#-étape-9--un-outil-avec-de-la-mémoire)
@@ -131,7 +134,7 @@ Avant de commencer, assurez-vous d'avoir :
    curl --version
    ```
 
-3. <img src="https://img.shields.io/badge/Node.js-optionnel-pour_l_Inspecteur-339933?logo=nodedotjs" alt="Node.js optionnel"> — *(optionnel)* uniquement pour l'Inspecteur MCP de l'étape 6 (`npx`).
+3. <img src="https://img.shields.io/badge/MCP_Command_Center-pour_l_étape_6-58a6ff" alt="MCP Command Center"> — le client visuel de l'[étape 6](#-étape-6--mcp-command-center-client-visuel) ([release](https://github.com/DeamonDev888/mcp-command-center/releases) à télécharger — binaire natif, pas de Node). *Node.js reste optionnel* pour l'inspecteur officiel cité en alternative.
 
 C'est tout. **Pas de Docker, pas de Redis, pas de base de données.**
 
@@ -346,43 +349,53 @@ d'œil que le serveur vit (les outils de supervision l'utilisent).
 
 ---
 
-## 🔍 Étape 6 — L'Inspecteur MCP (client visuel)
+## 🔍 Étape 6 — MCP Command Center (client visuel)
 
-curl, c'est bien pour comprendre ; voir ses outils dans une **interface
-graphique officielle**, c'est mieux. Le protocole MCP fournit un inspecteur.
+curl, c'est bien pour comprendre ; **voir ses outils dans une interface graphique**, c'est mieux.
+Le [**MCP Command Center**](https://github.com/DeamonDev888/mcp-command-center) est un superviseur
+de serveurs MCP en Rust natif : il détecte vos serveurs, les sonde en continu, affiche leurs outils,
+leur état et leur latence — et il reconnaît les serveurs LiteMCP **par fingerprint** (badge dédié,
+sans rien ajouter à votre code).
 
-### Lancement
+### Installation
 
-```bash
-npx @modelcontextprotocol/inspector
-```
+1. Téléchargez la dernière release pour votre système sur la
+   [page des releases](https://github.com/DeamonDev888/mcp-command-center/releases)
+   (ou compilez depuis les sources : `cargo run --release`) ;
+2. Lancez-le — l'interface s'ouvre sur **http://127.0.0.1:5090** (port suivant si occupé).
 
-Cette commande démarre un serveur proxy et ouvre l'interface dans votre
-navigateur, généralement à l'adresse `http://localhost:6274`.
+### Ajouter votre serveur
 
-### Configuration de la connexion
+Votre serveur tourne sur le port 8080. Dans le panneau de gauche de l'interface :
 
-Dans la barre latérale :
+1. Cliquez sur **« + Ajouter un serveur »** ;
+2. **Transport** : `HTTP (streamable)` ;
+3. **Nom affiché** : `mon-premier-mcp` ;
+4. **Port** : `8080` — **Chemin MCP** : `/mcp` (déjà prérempli) ;
+5. Cliquez sur **« Ajouter & sonder »**.
 
-1. **Type de transport** : sélectionnez `Streamable HTTP` ;
-2. **URL** : entrez `http://127.0.0.1:8080/mcp` ;
-3. Pas de token, pas d'options — votre serveur local n'en demande pas.
+> 💡 Le bouton **« 🔍 Scanner les ports locaux »** découvre tout seul les serveurs MCP de la
+> plage configurée (3000-3200 par défaut) — élargissez-la dans les réglages si vos serveurs
+> écoutent ailleurs. Il sonde aussi les autres machines du LAN (et par SSH).
 
-### Connexion
+### Ce que vous devez voir
 
-Cliquez sur **« Connect »**. L'inspecteur interroge votre serveur.
+| Élément | Signification |
+|---|---|
+| Point **vert + état `UP`** | le serveur répond aux sondes MCP (`initialize` + `tools/list`) |
+| Badge **« LiteMCP »** | Command Center a reconnu le framework par fingerprint : réponse en `2026-07-28` + sonde `GET /health` « ok » |
+| Compteur **`4`** à côté du nom | vos quatre outils, découverts via `tools/list` |
+| Détail de la carte | la liste complète (`hello`, `analyze`, `divide`, `counter`), la latence, le journal temps réel |
 
-### Interaction
+Vous venez de reproduire exactement ce que fera un agent IA quand il découvrira votre serveur —
+mais avec des cartes et des boutons au lieu de JSON. Et contrairement à un test ponctuel, le
+Command Center **continue de superviser** : état, latence et journal en continu, sur toutes vos
+machines.
 
-Une fois connecté, utilisez les onglets pour interagir :
-
-* **Tools** — listez vos outils, remplissez leurs paramètres dans un
-  formulaire généré depuis le schéma, et appelez-les d'un clic ;
-* **Resources** / **Prompts** — les autres registres MCP (hors scope de ce
-  tuto, votre serveur n'en expose pas encore).
-
-Vous venez de reproduire exactement ce que fera un agent IA réel quand il
-découvrira votre serveur — mais avec des formulaires au lieu de JSON.
+> 💡 **Alternative officielle** : `npx @modelcontextprotocol/inspector` (l'inspecteur du protocole,
+> transport « Streamable HTTP », URL `http://127.0.0.1:8080/mcp`) fait le même travail de découverte
+> en ponctuel. Le Command Center va plus loin : supervision continue, détection multi-machines
+> (LAN, SSH), boutique de 64 MCP installables en un clic.
 
 ---
 
@@ -733,5 +746,9 @@ Les contributions sont les bienvenues ! Ouvrez une _issue_ pour discuter des
 changements que vous souhaitez apporter, ou une _PR_ directement pour les
 corrections simples (typos, exemples).
 
+> ⭐ **Ce tuto vous a aidé ?** La plus belle façon de dire merci est une **étoile sur la lib** :
+> [github.com/DeamonDev888/litemcp](https://github.com/DeamonDev888/litemcp) — c'est gratuit,
+> c'est public, et c'est ce qui fait vivre le projet. Merci !
+>
 > 🔗 **LiteMCP** — [github.com/DeamonDev888/litemcp](https://github.com/DeamonDev888/litemcp) ·
 > [crates.io/crates/litemcp](https://crates.io/crates/litemcp) — MIT OR Apache-2.0

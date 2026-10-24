@@ -1,0 +1,132 @@
+/* Feuille de style du site du tuto (GitHub Pages) — un seul document,
+   généré depuis README.md par pandoc (voir .github/workflows/pages.yml). */
+
+:root {
+  --texte: #1f2328;
+  --texte-2: #59636e;
+  --fond: #ffffff;
+  --fond-2: #f6f8fa;
+  --bordure: #d1d9e0;
+  --accent: #1a7f37;
+  --accent-2: #2da44e;
+  --code-fond: #f6f8fa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  color: var(--texte);
+  background: var(--fond);
+  line-height: 1.65;
+  font-size: 16px;
+}
+
+header.title-block,
+body > header {
+  text-align: center;
+  padding: 2.5rem 1rem 1.5rem;
+}
+
+h1 {
+  font-size: 2rem;
+  margin: 0.5rem 0;
+  line-height: 1.25;
+}
+
+h2 {
+  margin-top: 2.5rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--bordure);
+  font-size: 1.5rem;
+}
+
+h3 { font-size: 1.2rem; margin-top: 1.8rem; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+main {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 0 1.25rem 4rem;
+}
+
+/* Table des matières générée par pandoc */
+nav#TOC {
+  background: var(--fond-2);
+  border: 1px solid var(--bordure);
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0 2.5rem;
+}
+nav#TOC ul { list-style: none; padding-left: 1rem; margin: 0.25rem 0; }
+nav#TOC > ul { padding-left: 0; }
+nav#TOC a { color: var(--texte); }
+nav#TOC a:hover { color: var(--accent); }
+
+/* Badges shields.io du header */
+img { max-width: 100%; }
+header img { margin: 0 2px; }
+
+code, pre, kbd {
+  font-family: ui-monospace, "Cascadia Code", Consolas, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+code {
+  background: var(--code-fond);
+  border-radius: 4px;
+  padding: 0.15em 0.35em;
+}
+
+pre {
+  background: var(--code-fond);
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.25rem 0;
+  display: block;
+  overflow-x: auto;
+}
+th, td {
+  border: 1px solid var(--bordure);
+  padding: 0.45rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: var(--fond-2); }
+
+blockquote {
+  margin: 1.25rem 0;
+  padding: 0.5rem 1.25rem;
+  border-left: 4px solid var(--accent-2);
+  background: var(--fond-2);
+  border-radius: 0 8px 8px 0;
+  color: var(--texte-2);
+}
+blockquote strong { color: var(--texte); }
+
+hr {
+  border: none;
+  border-top: 1px solid var(--bordure);
+  margin: 2.5rem 0;
+}
+
+footer {
+  text-align: center;
+  color: var(--texte-2);
+  font-size: 0.85rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--bordure);
+}

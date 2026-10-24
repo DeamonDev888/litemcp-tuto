@@ -8,6 +8,7 @@
     <img src="https://img.shields.io/badge/Spec_MCP-2026--07--28-3fb950?style=for-the-badge" alt="Spec MCP 2026-07-28">
     <img src="https://img.shields.io/badge/niveau-d%C3%A9butant-F9D34C?style=for-the-badge" alt="Niveau débutant">
   </p>
+  <p>📖 <strong>Version web de ce tuto</strong> : <a href="https://deamondev888.github.io/litemcp-tuto/">deamondev888.github.io/litemcp-tuto</a></p>
 </div>
 
 ---

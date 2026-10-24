@@ -1,0 +1,63 @@
+# Site web du tuto (GitHub Pages) — généré depuis README.md, une seule source de vérité.
+# Le site publié : https://deamondev888.github.io/litemcp-tuto/
+
+name: Site du tuto (Pages)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer pandoc si absent
+        run: command -v pandoc >/dev/null || (sudo apt-get update && sudo apt-get install -y pandoc)
+
+      - name: Générer le site (README.md -> index.html)
+        run: |
+          mkdir -p site
+          # Le site a sa propre table des matières générée : on retire celle du README.
+          sed '/^## .*Table des matières/,/^---$/d' README.md > site/tuto.md
+          # Les liens vers le dossier d'exemple pointent vers le dépôt GitHub.
+          sed -i 's|](\./mon-premier-mcp)|](https://github.com/DeamonDev888/litemcp-tuto/tree/main/mon-premier-mcp)|g' site/tuto.md
+          pandoc site/tuto.md \
+            -f gfm+gfm_auto_identifiers -t html5 -s \
+            --toc --toc-depth=2 \
+            --metadata title="Mon premier serveur MCP en Rust — le tuto LiteMCP" \
+            --metadata lang=fr \
+            -c style.css \
+            -o site/index.html
+          cp style.css site/style.css
+          rm site/tuto.md
+
+      - name: Configurer Pages
+        uses: actions/configure-pages@v5
+
+      - name: Téléverser l'artefact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publier
+        id: deployment
+        uses: actions/deploy-pages@v4

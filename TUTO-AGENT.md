@@ -29,7 +29,9 @@
 
 Tu es un agent IA conversationnel. Un humain (ton utilisateur) te donne accès à
 un serveur MCP nommé **`mon-premier-mcp`** (version `0.1.0`, framework Rust
-LiteMCP, protocole `2026-07-28`). Ce serveur t'offre **quatre outils** — des
+[LiteMCP](https://github.com/DeamonDev888/litemcp) — la lib MCP la plus légère
+en mémoire et la plus rapide au monde, protocole `2026-07-28`). Ce serveur
+t'offre **quatre outils** — des
 capacités que tu n'as pas nativement :
 
 | Outil | Ce qu'il fait | Effet de bord |

@@ -404,6 +404,12 @@ de serveurs MCP en Rust natif : il détecte vos serveurs, les sonde en continu, 
 leur état et leur latence — et il reconnaît les serveurs LiteMCP **par fingerprint** (badge dédié,
 sans rien ajouter à votre code).
 
+<p align="center">
+  <img src="assets/command-center-ui.png" alt="MCP Command Center : vue d'ensemble — serveurs locaux détectés, badge LiteMCP, outils du serveur sélectionné" width="820">
+</p>
+<p align="center"><i>Le Command Center en action : serveurs locaux détectés à gauche,
+détails et outils du serveur sélectionné à droite (badge « LiteMCP » = fingerprint).</i></p>
+
 ### Installation
 
 C'est une **application** : tu télécharges, tu double-cliques, elle s'ouvre.
@@ -420,16 +426,6 @@ Double-clique sur le fichier téléchargé : **la fenêtre de l'application s'ou
 comme n'importe quelle app. (La première fois, Windows peut demander
 « Informations complémentaires → Exécuter quand même » pour une application non
 signée ; sur macOS : clic droit sur le fichier → **Ouvrir**.)
-
-> 🪶 **Version plus légère (1 Mo)** — si la fenêtre native refuse de démarrer
-> (Linux sans WebKit, système ancien), prends le binaire « navigateur » : il
-> lance le serveur, et l'interface s'ouvre dans ton navigateur sur
-> **http://127.0.0.1:5090** (port suivant si occupé).
->
-> [Windows](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-windows-x86_64.exe) ·
-> [Linux](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-linux-x86_64) ·
-> [macOS ARM](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-macos-aarch64) ·
-> [macOS Intel](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-macos-x86_64)
 
 > 📦 **Toutes les versions** (historique, notes de version, code source) :
 > [github.com/DeamonDev888/mcp-command-center/releases](https://github.com/DeamonDev888/mcp-command-center/releases)

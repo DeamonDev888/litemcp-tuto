@@ -1,6 +1,6 @@
 <div align="center">
   <h1><font color="#2ECC71">Mon premier serveur MCP en Rust</font></h1>
-  <p><strong>Le guide ULTRA débutant pour créer vos propres outils IA avec <a href="https://github.com/DeamonDev888/litemcp">LiteMCP</a>.</strong></p>
+  <p><strong>Le guide ULTRA débutant pour créer vos propres outils IA avec <a href="https://github.com/DeamonDev888/litemcp">LiteMCP</a> — la lib MCP la plus légère en mémoire et la plus rapide au monde.</strong></p>
   <p>Aucune connaissance de MCP requise. Si vous savez lancer un terminal, vous pouvez suivre.</p>
   <p>
     <img src="https://img.shields.io/badge/Rust-1.85%2B-DEA584?style=for-the-badge&logo=rust" alt="Rust 1.85+">
@@ -109,13 +109,15 @@ Contrôle de votre maison intelligente ? Un outil. C'est vous qui décidez.
 ## ⚡ Pourquoi LiteMCP ?
 
 [**LiteMCP**](https://github.com/DeamonDev888/litemcp) est une bibliothèque
-Rust (publiée sur [crates.io](https://crates.io/crates/litemcp)) pensée pour
-être **la plus légère de l'écosystème** :
+Rust (publiée sur [crates.io](https://crates.io/crates/litemcp)) —
+**la plus légère en mémoire et la plus rapide au monde**, preuve à l'appui
+dans son [benchmark 9 frameworks](https://github.com/DeamonDev888/litemcp/blob/main/docs/BENCH.md) :
 
 | | |
 |---|---|
-| 🪶 **Minuscule** | 2 dépendances seulement (`serde` + `serde_json`) |
+| 🪶 **Minuscule** | 2 dépendances seulement (`serde` + `serde_json`) — et **5,1 Mo de RAM** en charge |
 | 🚀 **Sans usine à gaz** | pas de tokio, pas de framework web — les threads standards de Rust |
+| ⚡ **La plus rapide** | **0,08 ms** par appel d'outil en boucle locale — 2× plus rapide que le meilleur des 8 autres frameworks benchés |
 | ✍️ **Quelques lignes suffisent** | votre premier serveur tient en 10 lignes |
 | 🛡️ **Sûr par défaut** | validation des entrées, garde DNS-rebinding, corps limité |
 | 📏 **Spéc 2026-07-28** | le MCP stateless moderne (Streamable HTTP), à la lettre |

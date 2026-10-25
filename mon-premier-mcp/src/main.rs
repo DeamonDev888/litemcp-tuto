@@ -19,7 +19,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 #[derive(Deserialize)]
 struct AnalyzeArgs {
     text: String,            // requis : 1 à 10 000 caractères (voir le schéma)
-    uppercase: Option<bool>, // optionnel
+    uppercase: Option<bool>, // optionnel — porte une valeur par défaut (false)
 }
 
 fn main() -> std::io::Result<()> {
@@ -49,12 +49,14 @@ fn main() -> std::io::Result<()> {
         )
         // Outil 2 — schéma zod : arguments validés AVANT le handler,
         // puis désérialisés dans AnalyzeArgs (args.text est un vrai String).
+        // `uppercase` porte une valeur par défaut : le champ est optionnel,
+        // la valeur est publiée dans le schéma ET injectée si elle manque.
         .tool_parse(
             "analyze",
             "Statistiques d'un texte (mots, caractères, mot le plus long)",
             zod::object()
                 .field("text", zod::string().min(1).max(10_000))
-                .opt("uppercase", zod::boolean())
+                .opt("uppercase", zod::boolean().default(false))
                 .strict(),
             |args: AnalyzeArgs| {
                 let longest = args

@@ -89,6 +89,11 @@ La réponse contient, pour chaque outil : `name`, `description` et
 donne des bornes (`minLength`, `maximum`…), elles sont **appliquées** par le
 serveur.
 
+Un champ absent de `required` n'est pas pour autant inutile : s'il porte un
+`default` dans le schéma, le serveur **injecte** cette valeur si tu ne
+l'envoies pas. Envoie-le quand même quand tu veux une valeur précise ;
+sinon, laisse-le de côté.
+
 Interdictions absolues :
 
 * ❌ inventer un paramètre qui n'est pas dans le schéma ;
@@ -140,7 +145,7 @@ Schéma **strict** (les champs inconnus sont rejetés) :
 | Champ | Type | Contraintes |
 |---|---|---|
 | `text` | chaîne | **requis**, 1 à 10 000 caractères |
-| `uppercase` | booléen | optionnel (défaut `false`) — ajoute `shout` (texte en majuscules) |
+| `uppercase` | booléen | optionnel — **défaut `false`** (publié dans le schéma, injecté si absent) — ajoute `shout` (texte en majuscules) |
 
 ```json
 {"jsonrpc":"2.0","id":2,"method":"tools/call",
@@ -155,6 +160,9 @@ Réponse :
   "resultType":"complete"}}
 }
 ```
+
+> 💡 `uppercase` est **optionnel** : tu peux l'omettre, le serveur injecte
+> `false`. Mais si tu l'envoies, il doit être un booléen.
 
 ### `divide`
 

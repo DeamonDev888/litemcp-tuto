@@ -190,7 +190,7 @@ Ouvrez `Cargo.toml` et ajoutez les dépendances sous `[dependencies]` :
 
 ```toml
 [dependencies]
-litemcp = "0.5"
+litemcp = "0.6"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
@@ -208,8 +208,11 @@ cargo fetch
 > embarque. Rien d'autre ne sera ajouté à votre projet.
 
 > 🔄 **La doc suit les versions** : le numéro ci-dessus est mis à jour
-> **automatiquement** — un workflow GitHub lit crates.io chaque semaine et
-> recompile l'exemple avant de modifier ce tuto ([`maj-version.yml`](.github/workflows/maj-version.yml)).
+> **automatiquement** dès que LiteMCP est publié — la lib notifie ce dépôt à
+> chaque publication (événement `repository_dispatch`), et un filet de
+> sécurité relit crates.io chaque lundi ([`maj-version.yml`](.github/workflows/maj-version.yml)).
+> Rien n'est poussé tant que **chaque bloc de code de ce tuto n'a pas été
+> recompilé** contre la nouvelle version : la doc ne peut pas mentir.
 > Le badge d'en-tête, lui, montre la version **en direct**.
 
 ---
@@ -483,7 +486,7 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 struct AnalyzeArgs {
     text: String,             // requis
-    uppercase: Option<bool>,  // optionnel
+    uppercase: Option<bool>,  // optionnel — porte une valeur par défaut
 }
 ```
 
@@ -495,7 +498,7 @@ Puis dans la chaîne du `ServerBuilder`, juste après le bloc `.tool(...)` :
             "Statistiques d'un texte (mots, caractères, mot le plus long)",
             zod::object()
                 .field("text", zod::string().min(1).max(10_000))  // requis, 1 à 10 000 caractères
-                .opt("uppercase", zod::boolean())                 // optionnel
+                .opt("uppercase", zod::boolean().default(false))   // optionnel, défaut false
                 .strict(),                                       // refuse les champs inconnus
             |args: AnalyzeArgs| {
                 let longest = args.text.split_whitespace()
@@ -524,7 +527,7 @@ curl -s http://127.0.0.1:8080/mcp \
 ```
 
 ```json
-{"jsonrpc":"2.0","id":1,"result":{"structuredContent":{"words":5,"chars":19,"longest":"fort"}}}
+{"jsonrpc":"2.0","id":1,"result":{"structuredContent":{"words":5,"chars":18,"longest":"fort"}}}
 ```
 
 Notez le gain côté code : `args.text` est un vrai `String`, `args.uppercase`
@@ -552,6 +555,115 @@ problème, en français, champ par champ (texte trop court, champ inconnu,
 mauvais type…). C'est ce niveau de détail qui permet à l'IA de se corriger
 elle-même et de rappeler l'outil correctement.
 
+### Les valeurs par défaut (`.default(v)`)
+
+Un champ optionnel, c'est souvent une valeur par défaut déguisée. LiteMCP
+0.6 vous permet de l'écrire **une seule fois** : `.default(v)` attache une
+valeur par défaut à n'importe quel schéma.
+
+Trois choses se passent, automatiquement :
+
+1. le champ devient **optionnel** (il disparaît de `required`) ;
+2. la valeur est **publiée** dans le schéma (`"default": …`) — l'IA la
+   voit dans `tools/list` ;
+3. si l'IA n'envoie pas le champ, la valeur est **injectée** dans les
+   arguments **avant** l'exécution de votre handler.
+
+Reprenons l'outil `analyze` : au lieu d'écrire `args.uppercase.unwrap_or(false)`
+à l'intérieur du handler, on déclare le défaut **dans le schéma**. Vous
+modifiez une seule ligne de l'outil `analyze` de l'étape précédente :
+
+```rust
+                .opt("uppercase", zod::boolean().default(false))   // optionnel, défaut false
+```
+
+C'est tout. Le champ devient **optionnel** (il disparaît de `required`),
+la valeur est **publiée** dans le schéma (`"default": …`) — l'IA la voit
+dans `tools/list` — et si l'IA n'envoie pas le champ, elle est
+**injectée** dans les arguments **avant** l'exécution de votre handler.
+
+Le schéma publié le dit maintenant à l'IA :
+
+```json
+{"uppercase":{"default":false,"type":"boolean"}}
+```
+
+et un appel **sans** `uppercase` fonctionne sans que votre code ait à
+douter :
+
+```bash
+curl -s http://127.0.0.1:8080/mcp \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"analyze","arguments":{"text":"bonjour"}}}'
+# → {"words":1,"chars":7,"longest":"bonjour"}   (pas d'erreur : le défaut est injecté)
+```
+
+> 💡 Deux détails qui font la différence :
+>
+> * le défaut est **validé** contre son propre schéma — un défaut
+>   incohérent (un `true` sur un `integer`) est une erreur de
+>   programmation, refusée au démarrage ;
+> * les défauts s'appliquent **récursivement** : un objet imbriqué porte
+>   ses propres défauts.
+
+### Deux autres schémas utiles
+
+> 💡 Les deux outils qui suivent sont **optionnels** — ils ne sont pas
+> dans le projet complet du dépôt (qui reste à 4 outils). Ils montrent
+> deux schémas de la 0.6 que vous exhaled plus tard.
+
+**`zod::record(valeur)`** — un objet dont les **clés sont libres** mais
+dont les **valeurs sont typées** (un dictionnaire). Il faut d'abord le
+type des arguments :
+
+```rust
+use std::collections::HashMap;
+
+// Les arguments de « labels » : un dictionnaire chaîne → chaîne.
+#[derive(Deserialize)]
+struct LabelsArgs {
+    labels: HashMap<String, String>,
+}
+```
+
+puis l'outil :
+
+```rust
+        .tool_parse(
+            "labels",
+            "Compte des étiquettes fournies",
+            zod::object().field("labels", zod::record(zod::string())),
+            |args: LabelsArgs| Ok(json!({ "n": args.labels.len() })),
+        )
+```
+
+`{"a": "x"}` passe ; `{"a": 1}` est refusé, et le chemin de l'erreur
+pointe la clé fautive : `arguments.labels.a`.
+
+**`zod::integer_enumeration(&[1, 2, 3])`** — la même idée que
+`zod::enumeration`, mais pour des **entiers** (la version chaîne reste
+limitée aux chaînes) :
+
+```rust
+// Les arguments de « niveau » : un entier parmi 1, 2 ou 3.
+#[derive(Deserialize)]
+struct LevelArgs {
+    level: i64,
+}
+```
+
+```rust
+        .tool_parse(
+            "niveau",
+            "Fixe le niveau de priorité",
+            zod::object().field("level", zod::integer_enumeration(&[1, 2, 3])),
+            |args: LevelArgs| Ok(json!({ "level": args.level })),
+        )
+```
+
+`level: 2` passe ; `level: 9` est refusé en `-32602` avec
+« doit être l'un de 1, 2, 3 ».
+
 ---
 
 ## ⚠️ Étape 8 — Gérer les erreurs
@@ -567,8 +679,8 @@ Ajoutons l'exemple classique — la division :
 
 ```rust
         .tool("divide", "Divise a par b (erreur si b vaut 0)", |args| {
-            let a = args.get("a").and_then(|v| v.as_f64).ok_or("a manquant ou pas un nombre")?;
-            let b = args.get("b").and_then(|v| v.as_f64).ok_or("b manquant ou pas un nombre")?;
+            let a = args.get("a").and_then(|v| v.as_f64()).ok_or("a manquant ou pas un nombre")?;
+            let b = args.get("b").and_then(|v| v.as_f64()).ok_or("b manquant ou pas un nombre")?;
             if b == 0.0 {
                 return Err("division par zéro".to_string());
             }
@@ -669,7 +781,7 @@ décisions de l'IA.
 Activez la feature `macros` dans `Cargo.toml` :
 
 ```toml
-litemcp = { version = "0.5", features = ["macros"] }
+litemcp = { version = "0.6", features = ["macros"] }
 ```
 
 Le schéma peut alors être **dérivé des types des paramètres** d'une fonction
@@ -797,11 +909,19 @@ l'appeler grâce au schéma publié par `tools/list`. C'est toute la magie de MC
 | `zod::integer().min(1).max(100)` | entier borné |
 | `zod::number().min(0.0)` | flottant borné |
 | `zod::boolean()` | booléen |
-| `zod::enumeration(&["utc", "local"])` | valeur parmi une liste |
+| `zod::enumeration(&["utc", "local"])` | valeur parmi une liste (chaînes) |
+| `zod::integer_enumeration(&[1, 2, 3])` | valeur parmi une liste (entiers) |
 | `zod::array(zod::string()).min(1).max(10)` | tableau borné |
+| `zod::record(zod::string())` | objet à valeurs typées (clés libres) |
 | `zod::nullable(schéma)` | accepte `null` |
 | `zod::describe("…", schéma)` | publie une description de champ |
 | `zod::object().field(..).opt(..).strict()` | objet ; `.strict()` refuse l'inconnu |
+| `.default(v)` (sur n'importe quel schéma) | **valeur par défaut** : publiée *et* injectée |
+
+> 💡 `.default(v)` est la nouveauté de la 0.6 : le champ devient
+> **optionnel**, la valeur est publiée dans le schéma (`"default": …`)
+> **et injectée** dans les arguments avant l'exécution du handler — comme
+> Zod. Détail dans [l'étape 7](#️-étape-7--des-outils-qui-se-protègent-tout-seuls).
 
 ### Les erreurs en un coup d'œil
 

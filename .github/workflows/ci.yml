@@ -1,0 +1,74 @@
+# CI du tuto : le README et TUTO-AGENT.md doivent rester coherents avec
+# la version publiee de litemcp.
+#
+# Ce workflow est le **garde-fou** du suivi automatique : le workflow
+# `maj-version.yml` verifie avant de pousser, celui-ci verifie que ce
+# qui est deja sur `main` reste coherent (blocs compiles contre
+# litemcp publie, symboles cites, pins de version, build du site).
+# Un push qui casse la doc est rejete ici — il n'atteint jamais `main`.
+
+name: CI du tuto
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-tuto-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    name: Vérifier le tuto contre litemcp publié
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer Rust (toolchain stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Installer Python + jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 jq
+
+      - name: Dernière version publiée de litemcp
+        id: ver
+        run: |
+          set -euo pipefail
+          resp=$(curl -sf -A "litemcp-tuto-ci (https://github.com/DeamonDev888/litemcp-tuto)" \
+            https://crates.io/api/v1/crates/litemcp)
+          VER=$(printf '%s' "$resp" | jq -r '.crate.max_version')
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "litemcp publié : $VER"
+
+      - name: Vérifier le tuto (blocs compilés + symboles + pins)
+        run: |
+          set -euo pipefail
+          python3 tools/check_doc.py --version "${{ steps.ver.outputs.version }}"
+
+      - name: Vérifier que l'exemple du dépôt compile
+        working-directory: mon-premier-mcp
+        run: |
+          set -euo pipefail
+          cargo build --quiet
+
+      - name: Vérifier que le site se construit (pandoc)
+        run: |
+          set -euo pipefail
+          command -v pandoc >/dev/null || (sudo apt-get update && sudo apt-get install -y pandoc)
+          mkdir -p /tmp/site-check
+          pandoc README.md -f gfm+gfm_auto_identifiers -t html5 -s \
+            --toc --toc-depth=2 --highlight-style breezedark \
+            --metadata title="Vérification" --metadata lang=fr \
+            -o /tmp/site-check/index.html
+          pandoc TUTO-AGENT.md -f gfm+gfm_auto_identifiers -t html5 -s \
+            --toc --toc-depth=2 --highlight-style breezedark \
+            --metadata title="Vérification" --metadata lang=fr \
+            -o /tmp/site-check/agent.html
+          echo "le site se construit"

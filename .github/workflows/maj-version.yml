@@ -1,80 +1,142 @@
-# Suivi automatique de la version de litemcp : la doc (README + projet
-# d'exemple) suit la dernière publication crates.io. Rien n'est poussé tant
-# que l'exemple ne compile pas avec la nouvelle version ; et le push déclenche
-# le workflow Pages — le site suit donc aussi.
+# Tuto auto-suivi : le tuto suit litemcp automatiquement.
+#
+# Declencheurs :
+#   - `repository_dispatch` : la lib litemcp publie une version et
+#     pousse un evenement `litemcp-version` (instantane, ~1 min apres
+#     la publication sur crates.io) ;
+#   - `schedule` : filet de securite hebdomadaire (le dispatch peut
+#     etre rate) ;
+#   - `workflow_dispatch` : declenchement manuel a la demande.
+#
+# Principe : rien n'est pousse tant que le tuto n'est pas **verifie**.
+# La verification (`tools/check_doc.py`) rejoue la recette du tuto —
+# chaque bloc de code du README est compile contre la version publiee
+# — puis les symboles cites sont controles. Un bloc casse = echec, aucun
+# commit. Le push declenche ensuite le workflow Pages : le site suit.
 
 name: Suivi de version litemcp
 
 on:
+  repository_dispatch:
+    types: [litemcp-version]
   schedule:
-    - cron: '21 4 * * 1' # chaque lundi, 04:21 UTC
+    - cron: '21 4 * * 1' # chaque lundi, 04:21 UTC (filet de securite)
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version a cibler (vide = derniere publiee sur crates.io)'
+        required: false
+        type: string
 
 permissions:
   contents: write
 
 concurrency:
   group: maj-version
+  cancel-in-progress: false
 
 jobs:
   maj:
+    name: Mettre à jour le tuto pour la nouvelle version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Lire la dernière version publiée sur crates.io
+      - name: Installer Rust (toolchain stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Installer Python + jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 jq
+
+      # ---------- 1. Quelle version cibler ? ----------
+      - name: Déterminer la version cible
         id: ver
         run: |
           set -euo pipefail
-          resp=$(curl -sf -A "litemcp-tuto-ci (https://github.com/DeamonDev888/litemcp-tuto)" \
-            https://crates.io/api/v1/crates/litemcp)
-          VER=$(printf '%s' "$resp" | jq -r '.crate.max_version')
-          MINOR=$(printf '%s' "$VER" | cut -d. -f1-2)
-          MSRV=$(printf '%s' "$resp" | jq -r --arg v "$VER" \
-            '.versions[] | select(.num==$v) | .rust_version // empty')
+          CIBLE="${{ inputs.version }}"
+          if [ -z "$CIBLE" ]; then
+            resp=$(curl -sf -A "litemcp-tuto-ci (https://github.com/DeamonDev888/litemcp-tuto)" \
+              https://crates.io/api/v1/crates/litemcp)
+            CIBLE=$(printf '%s' "$resp" | jq -r '.crate.max_version')
+            MSRV=$(printf '%s' "$resp" | jq -r --arg v "$CIBLE" \
+              '.versions[] | select(.num==$v) | .rust_version // empty')
+          else
+            resp=$(curl -sf -A "litemcp-tuto-ci (https://github.com/DeamonDev888/litemcp-tuto)" \
+              "https://crates.io/api/v1/crates/litemcp/$CIBLE")
+            MSRV=$(printf '%s' "$resp" | jq -r '.version.rust_version // empty')
+          fi
+          MINEUR=$(printf '%s' "$CIBLE" | cut -d. -f1-2)
           {
-            echo "ver=$VER"
-            echo "minor=$MINOR"
-            echo "msrv=$MSRV"
+            echo "version=$CIBLE"
+            echo "mineur=$MINEUR"
+            echo "msrv=${MSRV:-}"
           } >> "$GITHUB_OUTPUT"
-          echo "dernière publiée : $VER (mineur $MINOR, MSRV ${MSRV:-inconnue})"
+          echo "version cible : $CIBLE (mineur $MINEUR, MSRV ${MSRV:-inconnue})"
 
-      - name: Mettre à jour README.md et le projet d'exemple
+      # ---------- 2. Le tuto suit-il déjà cette version ? ----------
+      - name: Vérifier si le tuto est déjà à jour
+        id: etat
         run: |
           set -euo pipefail
-          MINOR="${{ steps.ver.outputs.minor }}"
-          # Lignes de dépendance : litemcp = "0.X" (les deux formes).
-          sed -i -E "s|litemcp = \"[0-9]+\.[0-9]+\"|litemcp = \"$MINOR\"|g" \
+          MINEUR="${{ steps.ver.outputs.mineur }}"
+          if grep -q "litemcp = \"$MINEUR\"" README.md \
+             && grep -q "litemcp = { version = \"$MINEUR\"" README.md \
+             && grep -q "litemcp = \"$MINEUR\"" mon-premier-mcp/Cargo.toml; then
+            echo "a_jour=true" >> "$GITHUB_OUTPUT"
+            echo "le tuto suit déjà litemcp $MINEUR"
+          else
+            echo "a_jour=false" >> "$GITHUB_OUTPUT"
+            echo "le tuto doit être mis à jour vers litemcp $MINEUR"
+          fi
+
+      # ---------- 3. Mettre à jour les pins de version ----------
+      - name: Mettre à jour les pins de version (README + exemple)
+        run: |
+          set -euo pipefail
+          MINEUR="${{ steps.ver.outputs.mineur }}"
+          sed -i -E "s|litemcp = \"[0-9]+\\.[0-9]+\"|litemcp = \"$MINEUR\"|g" \
             README.md mon-premier-mcp/Cargo.toml
-          sed -i -E "s|litemcp = \{ version = \"[0-9]+\.[0-9]+\"|litemcp = { version = \"$MINOR\"|" README.md
-          # MSRV (badges + texte prérequis + rust-version), si crates.io la publie.
+          sed -i -E "s|litemcp = \\{ version = \"[0-9]+\\.[0-9]+\"|litemcp = { version = \"$MINEUR\"|g" \
+            README.md
+          # MSRV (badges + prérequis + rust-version), si crates.io la publie.
           MSRV="${{ steps.ver.outputs.msrv }}"
           if [ -n "$MSRV" ]; then
             sed -i -E \
-              -e "s|Rust-[0-9]+\.[0-9]+%2B|Rust-$MSRV%2B|g" \
-              -e "s|alt=\"Rust [0-9]+\.[0-9]+\+\"|alt=\"Rust $MSRV+\"|g" \
-              -e "s|cargo [0-9]+\.[0-9]+\.0 \(ou plus récent\)|cargo $MSRV.0 (ou plus récent)|g" \
+              -e "s|Rust-[0-9]+\\.[0-9]+%2B|Rust-$MSRV%2B|g" \
+              -e "s|alt=\"Rust [0-9]+\\.[0-9]+\\+\"|alt=\"Rust $MSRV+\"|g" \
+              -e "s|cargo [0-9]+\\.[0-9]+\\.0 \\(ou plus récent\\)|cargo $MSRV.0 (ou plus récent)|g" \
               README.md
-            sed -i -E "s|rust-version = \"[0-9]+\.[0-9]+\"|rust-version = \"$MSRV\"|" \
+            sed -i -E "s|rust-version = \"[0-9]+\\.[0-9]+\"|rust-version = \"$MSRV\"|" \
               mon-premier-mcp/Cargo.toml
           fi
           git diff --stat || true
 
-      - name: Vérifier que l'exemple compile avec cette version
+      # ---------- 4. Vérifier que le tuto compile vraiment ----------
+      - name: Vérifier le tuto (chaque bloc compile + symboles existants)
+        run: |
+          set -euo pipefail
+          python3 tools/check_doc.py --version "${{ steps.ver.outputs.version }}"
+
+      - name: Vérifier que l'exemple du dépôt compile
         working-directory: mon-premier-mcp
         run: |
-          command -v cargo >/dev/null 2>&1 || rustup toolchain install stable --profile minimal
+          set -euo pipefail
           cargo build --quiet
-          echo "exemple compilé avec litemcp ${{ steps.ver.outputs.ver }} : doc à jour publiable"
+          echo "exemple compilé avec litemcp ${{ steps.ver.outputs.version }}"
 
+      # ---------- 5. Publier ----------
       - name: Publier la mise à jour (si changements)
         run: |
+          set -euo pipefail
           if git diff --quiet; then
-            echo "doc déjà à jour (mineur ${{ steps.ver.outputs.minor }}) — rien à pousser"
+            echo "doc déjà à jour (mineur ${{ steps.ver.outputs.mineur }}) — rien à pousser"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add README.md mon-premier-mcp/Cargo.toml
-          git commit -m "doc : suivi automatique de litemcp ${{ steps.ver.outputs.ver }} (build de l'exemple vérifié)"
+          git commit -m "doc : suivi automatique de litemcp ${{ steps.ver.outputs.version }} (tuto vérifié — blocs compilés)"
           git push
+          echo "poussé — le workflow Pages régénère le site"

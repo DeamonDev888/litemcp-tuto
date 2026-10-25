@@ -129,7 +129,7 @@ vrai serveur MCP tourne **dans** votre programme.
 
 Avant de commencer, assurez-vous d'avoir :
 
-1. <img src="https://img.shields.io/badge/Rust-1.85%2B-nécessaire-DEA584?logo=rust" alt="Rust nécessaire"> — le compilateur Rust, installé via [rustup](https://rustup.rs) :
+1. <img src="https://img.shields.io/badge/Rust-1.85%2B_n%C3%A9cessaire-DEA584?logo=rust" alt="Rust 1.85+"> — le compilateur Rust, installé via [rustup](https://rustup.rs) :
 
    ```bash
    # Vérifiez votre installation :

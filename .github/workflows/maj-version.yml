@@ -72,8 +72,8 @@ jobs:
             MSRV=$(printf '%s' "$resp" | jq -r '.version.rust_version // empty')
           fi
           # Garde anti-injection : la version doit etre un semver strict.
-          # (elle alimente des interpolations ${{ }} dans les steps suivants ;
-          # un format inattendu est refuse ici, a la source)
+          # (elle alimente des interpolations d'expression dans les steps
+          # suivants ; un format inattendu est refuse ici, a la source)
           case "$CIBLE" in
             [0-9].[0-9].[0-9]|[0-9].[0-9].[0-9][0-9]|[0-9].[0-9][0-9].[0-9]|[0-9][0-9].[0-9].[0-9]) ;;
             *) echo "version non semver stricte : '$CIBLE' — abandon"; exit 1;;

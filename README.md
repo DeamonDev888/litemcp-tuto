@@ -146,7 +146,7 @@ Avant de commencer, assurez-vous d'avoir :
    curl --version
    ```
 
-3. <img src="https://img.shields.io/badge/MCP_Command_Center-pour_l_étape_6-58a6ff" alt="MCP Command Center"> — le client visuel de l'[étape 6](#-étape-6--mcp-command-center-client-visuel) ([release](https://github.com/DeamonDev888/mcp-command-center/releases) à télécharger — binaire natif, pas de Node). *Node.js reste optionnel* pour l'inspecteur officiel cité en alternative.
+3. <img src="https://img.shields.io/badge/MCP_Command_Center-pour_l_étape_6-58a6ff" alt="MCP Command Center"> — le client visuel : **[téléchargement par système (Windows / Linux / macOS)](#-étape-6--mcp-command-center-client-visuel)** — binaire natif, pas de Node. *Node.js reste optionnel* pour l'inspecteur officiel cité en alternative.
 
 C'est tout. **Pas de Docker, pas de Redis, pas de base de données.**
 
@@ -404,13 +404,36 @@ sans rien ajouter à votre code).
 
 ### Installation
 
-C'est une application — on l'installe comme une application :
+C'est une **application** : tu télécharges, tu double-cliques, elle s'ouvre.
+**Rien à compiler, rien à installer à côté.** Prends la ligne de ton système :
 
-1. Téléchargez la dernière release pour votre système sur la
-   [page des releases](https://github.com/DeamonDev888/mcp-command-center/releases)
-   — un binaire natif : **rien à compiler, rien à installer à côté** ;
-2. Lancez l'exécutable téléchargé — l'interface s'ouvre sur
-   **http://127.0.0.1:5090** (port suivant si occupé).
+| Ton système | Clique pour télécharger |
+|:--:|---|
+| 🪟 **Windows** 10 / 11 | **[⬇ mcp-command-center-desktop-windows-x86_64.exe](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-desktop-windows-x86_64.exe)** · 9 Mo |
+| 🐧 **Linux** (64 bits) | **[⬇ mcp-command-center-desktop-linux-x86_64](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-desktop-linux-x86_64)** · 13 Mo |
+| 🍎 **macOS** (puce M1/M2/M3…) | **[⬇ mcp-command-center-desktop-macos-aarch64](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-desktop-macos-aarch64)** · 12 Mo |
+| 🍎 **macOS** (Intel) | **[⬇ mcp-command-center-desktop-macos-x86_64](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-desktop-macos-x86_64)** · 12 Mo |
+
+Double-clique sur le fichier téléchargé : **la fenêtre de l'application s'ouvre**,
+comme n'importe quelle app. (La première fois, Windows peut demander
+« Informations complémentaires → Exécuter quand même » pour une application non
+signée ; sur macOS : clic droit sur le fichier → **Ouvrir**.)
+
+> 🪶 **Version plus légère (1 Mo)** — si la fenêtre native refuse de démarrer
+> (Linux sans WebKit, système ancien), prends le binaire « navigateur » : il
+> lance le serveur, et l'interface s'ouvre dans ton navigateur sur
+> **http://127.0.0.1:5090** (port suivant si occupé).
+>
+> [Windows](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-windows-x86_64.exe) ·
+> [Linux](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-linux-x86_64) ·
+> [macOS ARM](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-macos-aarch64) ·
+> [macOS Intel](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-macos-x86_64)
+
+> 📦 **Toutes les versions** (historique, notes de version, code source) :
+> [github.com/DeamonDev888/mcp-command-center/releases](https://github.com/DeamonDev888/mcp-command-center/releases)
+>
+> Les liens ci-dessus pointent toujours vers la **dernière version publiée** —
+> ils ne se périment pas.
 
 ### En faire une vraie app supervisée
 

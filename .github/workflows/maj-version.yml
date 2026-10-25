@@ -51,11 +51,15 @@ jobs:
           sudo apt-get install -y python3 jq
 
       # ---------- 1. Quelle version cibler ? ----------
+      # `inputs.version` passe par une variable d'environnement (jamais
+      # interpolee directement dans le script : risque d'injection).
       - name: Déterminer la version cible
         id: ver
+        env:
+          CIBLE_INPUT: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          CIBLE="${{ inputs.version }}"
+          CIBLE="$CIBLE_INPUT"
           if [ -z "$CIBLE" ]; then
             resp=$(curl -sf -A "litemcp-tuto-ci (https://github.com/DeamonDev888/litemcp-tuto)" \
               https://crates.io/api/v1/crates/litemcp)
@@ -67,6 +71,13 @@ jobs:
               "https://crates.io/api/v1/crates/litemcp/$CIBLE")
             MSRV=$(printf '%s' "$resp" | jq -r '.version.rust_version // empty')
           fi
+          # Garde anti-injection : la version doit etre un semver strict.
+          # (elle alimente des interpolations ${{ }} dans les steps suivants ;
+          # un format inattendu est refuse ici, a la source)
+          case "$CIBLE" in
+            [0-9].[0-9].[0-9]|[0-9].[0-9].[0-9][0-9]|[0-9].[0-9][0-9].[0-9]|[0-9][0-9].[0-9].[0-9]) ;;
+            *) echo "version non semver stricte : '$CIBLE' — abandon"; exit 1;;
+          esac
           MINEUR=$(printf '%s' "$CIBLE" | cut -d. -f1-2)
           {
             echo "version=$CIBLE"

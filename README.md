@@ -190,7 +190,7 @@ Ouvrez `Cargo.toml` et ajoutez les dépendances sous `[dependencies]` :
 
 ```toml
 [dependencies]
-litemcp = "0.6"
+litemcp = "0.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
@@ -696,7 +696,9 @@ Il y a **deux sortes** d'erreurs, et il faut choisir la bonne :
 | Situation | Quel registre | Ce que reçoit le client |
 |---|---|---|
 | Les arguments ne respectent pas le schéma | `tool_parse` / `tool_typed` | erreur `-32602` avec les `issues` — **votre code n'a pas tourné** |
-| Votre code a tourné mais a échoué (division par zéro, fichier absent…) | `Err(message)` dans la closure | HTTP 200 avec `isError: true` et le message — **l'IA lit l'explication** |
+| Votre code a tourné mais a échoué (division par zéro, fichier absent…) | `Err(message.into())` dans la closure | HTTP 200 avec `isError: true` et le message — **l'IA lit l'explication** |
+
+> Depuis la **0.7**, l'erreur d'un handler est un `ToolError` : `From<String>` / `From<&str>` la construisent (`"…".into()`, ou `?` sur un `ok_or("…")`), et les variantes (`ToolError::timeout(…)`, `rate_limited(…)`, `upstream(…)`) publient en plus un objet machine-lisible sous `structuredContent.error` (`code`, `retryable`, `retryAfterMs`).
 
 Ajoutons l'exemple classique — la division :
 
@@ -705,7 +707,7 @@ Ajoutons l'exemple classique — la division :
             let a = args.get("a").and_then(|v| v.as_f64()).ok_or("a manquant ou pas un nombre")?;
             let b = args.get("b").and_then(|v| v.as_f64()).ok_or("b manquant ou pas un nombre")?;
             if b == 0.0 {
-                return Err("division par zéro".to_string());
+                return Err("division par zéro".into());
             }
             Ok(serde_json::json!({ "quotient": a / b }))
         })
@@ -804,7 +806,7 @@ décisions de l'IA.
 Activez la feature `macros` dans `Cargo.toml` :
 
 ```toml
-litemcp = { version = "0.6", features = ["macros"] }
+litemcp = { version = "0.7", features = ["macros"] }
 ```
 
 Le schéma peut alors être **dérivé des types des paramètres** d'une fonction

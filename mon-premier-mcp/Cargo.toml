@@ -7,6 +7,6 @@ description = "Le serveur MCP du tutoriel LiteMCP — 4 outils, prêt à compile
 publish = false
 
 [dependencies]
-litemcp = "0.6"
+litemcp = "0.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

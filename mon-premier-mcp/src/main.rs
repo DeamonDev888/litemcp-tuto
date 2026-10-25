@@ -87,7 +87,7 @@ fn main() -> std::io::Result<()> {
                 .and_then(|v| v.as_f64())
                 .ok_or("b manquant ou pas un nombre")?;
             if b == 0.0 {
-                return Err("division par zéro".to_string());
+                return Err("division par zéro".into());
             }
             Ok(json!({ "quotient": a / b }))
         })

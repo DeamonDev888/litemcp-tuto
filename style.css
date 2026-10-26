@@ -223,7 +223,7 @@ blockquote a { color: var(--vert-vif); }
 
 img { max-width: 100%; }
 
-/* Captures d'écran centrées (ex. Command Center) */
+/* Captures d'écran centrées (ex. MCP Control) */
 .page p[align="center"] img {
   border: 1px solid var(--bordure-2);
   border-radius: 12px;

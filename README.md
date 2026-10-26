@@ -27,7 +27,7 @@
 - [✍️ Étape 3 — Votre premier outil](#️-étape-3--votre-premier-outil)
 - [▶️ Étape 4 — Compiler et lancer votre application](#️-étape-4--compiler-et-lancer-votre-application)
 - [🧪 Étape 5 — Tester avec curl](#-étape-5--tester-avec-curl)
-- [🔍 Étape 6 — MCP Command Center (client visuel)](#-étape-6--mcp-command-center-client-visuel)
+- [🔍 Étape 6 — MCP Control (client visuel)](#-étape-6--mcp-control-client-visuel)
 - [🛡️ Étape 7 — Des outils qui se protègent tout seuls](#️-étape-7--des-outils-qui-se-protègent-tout-seuls)
 - [⚠️ Étape 8 — Gérer les erreurs](#️-étape-8--gérer-les-erreurs)
 - [🧠 Étape 9 — Un outil avec de la mémoire](#-étape-9--un-outil-avec-de-la-mémoire)
@@ -69,7 +69,7 @@ Ce tutoriel vous apprend à écrire le vôtre en Rust, en partant de zéro.
 
 > 💡 **À la fin de ce tuto** vous aurez **votre application MCP** : un binaire
 > unique avec 4 outils (bonjour, analyse de texte, division, compteur),
-> compilé en release, supervisé comme une vraie app par le Command Center et
+> compilé en release, supervisé comme une vraie app par MCP Control et
 > prêt à brancher sur n'importe quel agent IA. Le code complet est dans le
 > dossier [`mon-premier-mcp/`](./mon-premier-mcp) de ce dépôt.
 
@@ -148,7 +148,7 @@ Avant de commencer, assurez-vous d'avoir :
    curl --version
    ```
 
-3. <img src="https://img.shields.io/badge/MCP_Command_Center-pour_l_étape_6-58a6ff" alt="MCP Command Center"> — le client visuel : **[téléchargement par système (Windows / Linux / macOS)](#-étape-6--mcp-command-center-client-visuel)** — binaire natif, pas de Node. *Node.js reste optionnel* pour l'inspecteur officiel cité en alternative.
+3. <img src="https://img.shields.io/badge/MCP_Control-pour_l_étape_6-58a6ff" alt="MCP Control"> — le client visuel : **[téléchargement par système (Windows / Linux / macOS)](#-étape-6--mcp-control-client-visuel)** — binaire natif, pas de Node. *Node.js reste optionnel* pour l'inspecteur officiel cité en alternative.
 
 C'est tout. **Pas de Docker, pas de Redis, pas de base de données.**
 
@@ -310,7 +310,7 @@ avec un objet JSON qui dit ce qu'il veut. Testons les deux requêtes fondamental
 
 > 🤫 **Sous le capot uniquement** : l'adresse et le port sont des détails
 > internes de votre app. Vous ne les écrirez jamais à la main dans un vrai
-> usage — les clients (Command Center, agents IA) s'en chargent. Cette étape
+> usage — les clients (MCP Control, agents IA) s'en chargent. Cette étape
 > sert juste à **voir** la mécanique une fois, pour ne plus jamais la subir.
 
 ### Appeler un outil : `tools/call`
@@ -396,18 +396,18 @@ d'œil que le serveur vit (les outils de supervision l'utilisent).
 
 ---
 
-## 🔍 Étape 6 — MCP Command Center (client visuel)
+## 🔍 Étape 6 — MCP Control (client visuel)
 
 curl, c'est bien pour comprendre ; **voir ses outils dans une interface graphique**, c'est mieux.
-Le [**MCP Command Center**](https://github.com/DeamonDev888/mcp-command-center) est un superviseur
+Le [**MCP Control**](https://github.com/DeamonDev888/mcp-control) est un superviseur
 de serveurs MCP en Rust natif : il détecte vos serveurs, les sonde en continu, affiche leurs outils,
 leur état et leur latence — et il reconnaît les serveurs LiteMCP **par fingerprint** (badge dédié,
 sans rien ajouter à votre code).
 
 <p align="center">
-  <img src="assets/command-center-ui.png" alt="MCP Command Center : vue d'ensemble — serveurs locaux détectés, badge LiteMCP, outils du serveur sélectionné" width="820">
+  <img src="assets/mcp-control-ui.png" alt="MCP Control : vue d'ensemble — serveurs locaux détectés, badge LiteMCP, outils du serveur sélectionné" width="820">
 </p>
-<p align="center"><i>Le Command Center en action : serveurs locaux détectés à gauche,
+<p align="center"><i>MCP Control en action : serveurs locaux détectés à gauche,
 détails et outils du serveur sélectionné à droite (badge « LiteMCP » = fingerprint).</i></p>
 
 ### Installation
@@ -417,10 +417,10 @@ C'est une **application** : tu télécharges, tu double-cliques, elle s'ouvre.
 
 | Ton système | Clique pour télécharger |
 |:--:|---|
-| 🪟 **Windows** 10 / 11 | **[⬇ mcp-command-center-desktop-windows-x86_64.exe](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-desktop-windows-x86_64.exe)** · 9 Mo |
-| 🐧 **Linux** (64 bits) | **[⬇ mcp-command-center-desktop-linux-x86_64](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-desktop-linux-x86_64)** · 13 Mo |
-| 🍎 **macOS** (puce M1/M2/M3…) | **[⬇ mcp-command-center-desktop-macos-aarch64](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-desktop-macos-aarch64)** · 12 Mo |
-| 🍎 **macOS** (Intel) | **[⬇ mcp-command-center-desktop-macos-x86_64](https://github.com/DeamonDev888/mcp-command-center/releases/latest/download/mcp-command-center-desktop-macos-x86_64)** · 12 Mo |
+| 🪟 **Windows** 10 / 11 | **[⬇ mcp-control-desktop-windows-x86_64.exe](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-windows-x86_64.exe)** · 9 Mo |
+| 🐧 **Linux** (64 bits) | **[⬇ mcp-control-desktop-linux-x86_64](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-linux-x86_64)** · 13 Mo |
+| 🍎 **macOS** (puce M1/M2/M3…) | **[⬇ mcp-control-desktop-macos-aarch64](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-macos-aarch64)** · 12 Mo |
+| 🍎 **macOS** (Intel) | **[⬇ mcp-control-desktop-macos-x86_64](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-macos-x86_64)** · 12 Mo |
 
 Double-clique sur le fichier téléchargé : **la fenêtre de l'application s'ouvre**,
 comme n'importe quelle app. (La première fois, Windows peut demander
@@ -428,16 +428,16 @@ comme n'importe quelle app. (La première fois, Windows peut demander
 signée ; sur macOS : clic droit sur le fichier → **Ouvrir**.)
 
 > 📦 **Toutes les versions** (historique, notes de version, code source) :
-> [github.com/DeamonDev888/mcp-command-center/releases](https://github.com/DeamonDev888/mcp-command-center/releases)
+> [github.com/DeamonDev888/mcp-control/releases](https://github.com/DeamonDev888/mcp-control/releases)
 >
 > Les liens ci-dessus pointent toujours vers la **dernière version publiée** —
 > ils ne se périment pas.
 
 ### En faire une vraie app supervisée
 
-Le Command Center peut **lancer et arrêter votre application lui-même** —
+MCP Control peut **lancer et arrêter votre application lui-même** —
 plus besoin d'ouvrir un terminal ni de recopier la moindre adresse. Vous
-pouvez fermer la fenêtre de l'étape 4 : le Command Center prend le relais.
+pouvez fermer la fenêtre de l'étape 4 : MCP Control prend le relais.
 
 Dans le panneau de gauche, cliquez sur **« + Ajouter un serveur »** :
 
@@ -451,7 +451,7 @@ Dans le panneau de gauche, cliquez sur **« + Ajouter un serveur »** :
    * **Workdir** (option) : le dossier de votre projet ;
 5. Cliquez sur **« Ajouter & sonder »**.
 
-La carte apparaît avec des boutons **Start / Stop** : le Command Center
+La carte apparaît avec des boutons **Start / Stop** : MCP Control
 démarre votre app, la **relance si elle plante** (flag `auto_restart`), et
 peut la lancer au démarrage de la machine. Le port et l'adresse restent des
 détails internes — tout se pilote depuis l'interface, **comme une vraie
@@ -466,24 +466,24 @@ application**.
 | Élément | Signification |
 |---|---|
 | Point **vert + état `UP`** | le serveur répond aux sondes MCP (`initialize` + `tools/list`) |
-| Badge **« LiteMCP »** | Command Center a reconnu le framework par fingerprint : réponse en `2026-07-28` + sonde `GET /health` « ok » |
+| Badge **« LiteMCP »** | MCP Control a reconnu le framework par fingerprint : réponse en `2026-07-28` + sonde `GET /health` « ok » |
 | Compteur **`4`** à côté du nom | vos quatre outils, découverts via `tools/list` |
 | Détail de la carte | la liste complète (`hello`, `analyze`, `divide`, `counter`), la latence, le journal temps réel |
 
 <p align="center">
-  <img src="assets/command-center.png" alt="Le serveur du tuto vu dans MCP Command Center" width="820">
+  <img src="assets/mcp-control.png" alt="Le serveur du tuto vu dans MCP Control" width="820">
 </p>
-<p align="center"><i>Le serveur <code>mon-premier-mcp</code> supervisé par le Command Center :
-badge <b>LiteMCP</b>, puce <b>RS</b> (Rust), <b>4 outils</b> listés, boutons Start/Stop.</i></p>
+<p align="center"><i>Le serveur <code>mon-premier-mcp</code> supervisé par MCP Control :
+badge <b>LiteMCP</b>, logo <b>R</b> cerclé (Rust), <b>4 outils</b> listés, boutons Start/Stop.</i></p>
 
 Vous venez de reproduire exactement ce que fera un agent IA quand il découvrira votre serveur —
-mais avec des cartes et des boutons au lieu de JSON. Et contrairement à un test ponctuel, le
-Command Center **continue de superviser** : état, latence et journal en continu, sur toutes vos
+mais avec des cartes et des boutons au lieu de JSON. Et contrairement à un test ponctuel,
+MCP Control **continue de superviser** : état, latence et journal en continu, sur toutes vos
 machines.
 
 > 💡 **Alternative officielle** : `npx @modelcontextprotocol/inspector` (l'inspecteur du protocole,
 > transport « Streamable HTTP », URL `http://127.0.0.1:8080/mcp`) fait le même travail de découverte
-> en ponctuel. Le Command Center va plus loin : supervision continue, détection multi-machines
+> en ponctuel. MCP Control va plus loin : supervision continue, détection multi-machines
 > (LAN, SSH), boutique de 64 MCP installables en un clic.
 
 ---
@@ -835,7 +835,7 @@ Types supportés : entiers, `f32`/`f64`, `bool`, `String`, `Option<T>`
 
 ## 🤖 Étape finale — Connecter un vrai client IA
 
-Votre app tourne (idéalement supervisée par le Command Center). Pour brancher
+Votre app tourne (idéalement supervisée par MCP Control). Pour brancher
 un agent IA, vous écrivez **une seule fois** où elle se trouve — après quoi
 l'agent découvre tout seul vos outils : vous ne manipulez plus jamais
 d'adresse ni de JSON.
@@ -860,9 +860,9 @@ mcp:
     url: "http://localhost:8080/mcp"
 ```
 
-### MCP Command Center
+### MCP Control
 
-Le [MCP Command Center](https://github.com/DeamonDev888/mcp-command-center)
+Le [MCP Control](https://github.com/DeamonDev888/mcp-control)
 reconnaît les serveurs LiteMCP **par fingerprint** (sonde `/health` + version
 de protocole) et les badgen automatiquement : état, liste des tools, latence,
 journal — sans rien ajouter à votre code.

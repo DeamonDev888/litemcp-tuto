@@ -192,7 +192,7 @@ Ouvrez `Cargo.toml` et ajoutez les dépendances sous `[dependencies]` :
 
 ```toml
 [dependencies]
-litemcp = "0.9"
+litemcp = "0.10"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
@@ -804,7 +804,7 @@ décisions de l'IA.
 Activez la feature `macros` dans `Cargo.toml` :
 
 ```toml
-litemcp = { version = "0.9", features = ["macros"] }
+litemcp = { version = "0.10", features = ["macros"] }
 ```
 
 Le schéma peut alors être **dérivé des types des paramètres** d'une fonction

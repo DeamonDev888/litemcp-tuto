@@ -417,15 +417,21 @@ C'est une **application** : tu télécharges, tu double-cliques, elle s'ouvre.
 
 | Ton système | Clique pour télécharger |
 |:--:|---|
-| 🪟 **Windows** 10 / 11 | **[⬇ mcp-control-desktop-windows-x86_64.exe](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-windows-x86_64.exe)** · 9 Mo |
-| 🐧 **Linux** (64 bits) | **[⬇ mcp-control-desktop-linux-x86_64](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-linux-x86_64)** · 13 Mo |
-| 🍎 **macOS** (puce M1/M2/M3…) | **[⬇ mcp-control-desktop-macos-aarch64](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-macos-aarch64)** · 12 Mo |
-| 🍎 **macOS** (Intel) | **[⬇ mcp-control-desktop-macos-x86_64](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-macos-x86_64)** · 12 Mo |
+| 🪟 **Windows** 10 / 11 | **[⬇ mcp-control-desktop-windows-x86_64-setup.exe](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-windows-x86_64-setup.exe)** — installateur (~3 Mo) |
+| 🐧 **Linux** (64 bits) | **[⬇ mcp-control-desktop-linux-x86_64](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-linux-x86_64)** · ~21 Mo |
+| 🍎 **macOS** — Intel **et** Apple Silicon (M1→M4) | **[⬇ mcp-control-desktop-macos-universal](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-macos-universal)** · ~32 Mo |
 
-Double-clique sur le fichier téléchargé : **la fenêtre de l'application s'ouvre**,
-comme n'importe quelle app. (La première fois, Windows peut demander
-« Informations complémentaires → Exécuter quand même » pour une application non
-signée ; sur macOS : clic droit sur le fichier → **Ouvrir**.)
+Sous Windows, l'installateur t'accompagne (langue, dossier, raccourcis), puis
+**la fenêtre de l'application s'ouvre** comme n'importe quelle app ; sur
+Linux/macOS, double-clique sur le fichier téléchargé (`chmod +x` au besoin).
+(La première fois, Windows peut demander « Informations complémentaires →
+Exécuter quand même » pour une application non signée ; sur macOS : clic droit
+sur le fichier → **Ouvrir**.)
+
+> ⬆️ **Mises à jour sans y penser** : dès qu'une nouvelle version sort, un
+> bouton **« Mettre à jour » bleu ciel** apparaît en haut de la fenêtre — un
+> clic ouvre la page de téléchargement. L'app se vérifie au lancement puis
+> chaque heure, toute seule.
 
 > 📦 **Toutes les versions** (historique, notes de version, code source) :
 > [github.com/DeamonDev888/mcp-control/releases](https://github.com/DeamonDev888/mcp-control/releases)
@@ -485,6 +491,46 @@ machines.
 > transport « Streamable HTTP », URL `http://127.0.0.1:8080/mcp`) fait le même travail de découverte
 > en ponctuel. MCP Control va plus loin : supervision continue, détection multi-machines
 > (LAN, SSH), boutique de 64 MCP installables en un clic.
+
+### 🌉 Bonus — le mode gateway : votre agent pilote tout, avec UNE ligne de config
+
+MCP Control ne se contente pas de *voir* vos serveurs : il est **lui-même un
+serveur MCP** (le « gateway ») — et, détail qui devrait vous plaire ici, ce
+gateway est **propulsé par LiteMCP**. Plutôt que de déclarer chaque serveur un
+par un dans votre agent IA, vous lui donnez **une seule adresse** — et il
+obtient tout :
+
+* **voir** tous les serveurs détectés, leurs outils et leurs états ;
+* **agir** comme depuis l'interface : démarrer, arrêter, installer depuis la boutique… ;
+* **appeler les outils de vos serveurs** détectés (`call_server_tool`) —
+  `mon-premier-mcp` de ce tuto inclus, sans jamais déclarer son adresse.
+
+Dans Claude Desktop (ou tout client MCP standard) :
+
+```json
+{
+  "mcpServers": {
+    "mcp-control": {
+      "url": "http://127.0.0.1:5090/mcp"
+    }
+  }
+}
+```
+
+Dans Hermes Agent (config.yaml) :
+
+```yaml
+mcp:
+  mcp-control:
+    url: "http://127.0.0.1:5090/mcp"
+```
+
+(`5090` est le port de l'interface — visible dans les réglages si vous l'avez
+changé.) Redémarrez l'agent, puis demandez naturellement : *« montre-moi mes
+serveurs MCP »*, *« relance mon-premier-mcp »* ou *« appelle l'outil hello de
+mon-premier-mcp avec name = Alice »*. Tout passe par les mêmes circuits que
+les boutons de l'interface : mêmes validations, même journal. En local, rien
+à sécuriser : le gateway n'écoute que sur votre machine.
 
 ---
 
@@ -866,6 +912,11 @@ Le [MCP Control](https://github.com/DeamonDev888/mcp-control)
 reconnaît les serveurs LiteMCP **par fingerprint** (sonde `/health` + version
 de protocole) et les badgen automatiquement : état, liste des tools, latence,
 journal — sans rien ajouter à votre code.
+
+> 🌉 **Encore plus simple pour l'agent** : branchez-le une seule fois sur le
+> **gateway** de MCP Control (`http://127.0.0.1:5090/mcp`) — il voit et pilote
+> alors tous vos serveurs d'un coup, `mon-premier-mcp` inclus. Le bloc de
+> config exact est dans [l'étape 6](#-étape-6--mcp-control-client-visuel).
 
 Une fois branché, demandez simplement à votre agent :
 *« Analyse ce texte avec l'outil analyze »* — il découvrira tout seul comment

@@ -35,6 +35,10 @@ fn main() -> std::io::Result<()> {
     let counter_state = Arc::clone(&counter);
 
     ServerBuilder::new("mon-premier-mcp", "0.1.0")
+        // Mode de tolérance : accepte aussi les clients MCP d'avant la
+        // révision 2026-07-28 (ceux qui commencent par `initialize`) et les
+        // appels curl courts du tuto. Sans cette ligne : profil strict.
+        .legacy(true)
         // Outil 1 — le plus simple : la closure lit le JSON elle-même.
         .tool(
             "hello",

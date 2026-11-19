@@ -29,8 +29,10 @@
 
 Tu es un agent IA conversationnel. Un humain (ton utilisateur) te donne accès à
 un serveur MCP nommé **`mon-premier-mcp`** (version `0.1.0`, framework Rust
-[LiteMCP](https://github.com/DeamonDev888/litemcp) — la lib MCP la plus légère
-en mémoire et la plus rapide au monde, protocole `2026-07-28`). Ce serveur
+[LiteMCP](https://github.com/DeamonDev888/litemcp) `0.11` — la lib MCP la plus légère
+en mémoire et la plus rapide au monde, protocole `2026-07-28`, avec le mode de
+tolérance `.legacy(true)` : il accepte aussi les requêtes courtes et les
+clients qui commencent par `initialize`). Ce serveur
 t'offre **quatre outils** — des
 capacités que tu n'as pas nativement :
 
@@ -58,7 +60,7 @@ d'état de connexion à maintenir.
 |---|---|
 | Méthode | `POST` |
 | URL | `http://127.0.0.1:8080/mcp` *(si l'humain t'a donné une autre adresse, utilise la sienne)* |
-| En-têtes | `Content-Type: application/json` |
+| En-têtes | `Content-Type: application/json` et `Accept: application/json` |
 | Corps | un objet JSON-RPC 2.0 avec un `"id"` unique par requête |
 
 Appel minimal, à la lettre :
@@ -66,15 +68,41 @@ Appel minimal, à la lettre :
 ```bash
 curl -s http://127.0.0.1:8080/mcp \
   -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-Deux règles de survie :
+Cette forme courte marche parce que le serveur du tuto est en mode de
+tolérance. Si tu passes par un client MCP (et non par des requêtes écrites à
+la main), ton client gère tout cela pour toi : ne change rien.
+
+> ⚠️ **Si tu reçois `400` avec `-32020`** (`MCP-Protocol-Version header is required`), le
+> serveur est en **profil strict** (révision `2026-07-28`, défaut de LiteMCP depuis la 0.11,
+> quand il n'a pas `.legacy(true)`). Rejoue alors **chaque** requête avec les en-têtes
+> `Accept: application/json`, `MCP-Protocol-Version: 2026-07-28`, `Mcp-Method: <la méthode>` et,
+> pour `tools/call`, `Mcp-Name: <nom de l'outil>`, et ajoute dans `params` :
+> `"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}`.
+> Exemple complet :
+>
+> ```bash
+> curl -s http://127.0.0.1:8080/mcp \
+>   -H 'Content-Type: application/json' \
+>   -H 'Accept: application/json' \
+>   -H 'MCP-Protocol-Version: 2026-07-28' \
+>   -H 'Mcp-Method: tools/call' \
+>   -H 'Mcp-Name: hello' \
+>   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}},"name":"hello","arguments":{"name":"Alex"}}}'
+> ```
+
+Trois règles de survie :
 
 * **`id`** : nombre ou chaîne, unique par requête en cours — il revient dans la
   réponse ; c'est ainsi que tu rapproches requête et réponse ;
 * **Sonde de vie** : `GET http://127.0.0.1:8080/health` répond `ok` (200) si
-  le serveur vit. Avant de déclarer « le serveur est down », sonde-le.
+  le serveur vit. Avant de déclarer « le serveur est down », sonde-le ;
+* **Lis toujours le corps JSON**, même quand le statut HTTP est `400` ou
+  `404` : c'est le champ `error` (code + message) qui te dit quoi corriger,
+  pas le statut.
 
 ## 0️⃣ Règle zéro : découvrir avant d'appeler
 
@@ -90,6 +118,10 @@ La réponse contient, pour chaque outil : `name`, `description` et
 `inputSchema` fait foi : s'il dit qu'un champ est requis, il est requis ; s'il
 donne des bornes (`minLength`, `maximum`…), elles sont **appliquées** par le
 serveur.
+
+La réponse porte aussi `ttlMs` (60 000) : tu peux garder le catalogue en
+mémoire pendant cette durée au lieu de le redemander à chaque appel. Au-delà,
+ou après une erreur « outil inconnu », relis-le.
 
 Un champ absent de `required` n'est pas pour autant inutile : s'il porte un
 `default` dans le schéma, le serveur **injecte** cette valeur si tu ne
@@ -128,10 +160,9 @@ Réponse réelle — lis le résultat dans `structuredContent` :
 
 ```json
 {"jsonrpc":"2.0","id":1,"result":{
+  "resultType":"complete",
   "content":[{"type":"text","text":"{\"message\":\"Bonjour, Alex !\"}"}],
-  "structuredContent":{"message":"Bonjour, Alex !"},
-  "resultType":"complete"}}
-}
+  "structuredContent":{"message":"Bonjour, Alex !"}}}
 ```
 
 *(`_meta` et autres champs protocolaires omis ici — ignore-les.)*
@@ -158,10 +189,11 @@ Réponse :
 
 ```json
 {"jsonrpc":"2.0","id":2,"result":{
-  "structuredContent":{"words":5,"chars":18,"longest":"fort"},
-  "resultType":"complete"}}
-}
+  "resultType":"complete",
+  "structuredContent":{"words":5,"chars":18,"longest":"fort"}}}
 ```
+
+*(abrégée : `content` porte le même objet sous forme de texte.)*
 
 > 💡 `uppercase` est **optionnel** : tu peux l'omettre, le serveur injecte
 > `false`. Mais si tu l'envoies, il doit être un booléen.
@@ -199,7 +231,7 @@ Réponse : `"structuredContent": {"count": 1}` puis `{"count": 2}`, etc.
 
 ## ⚠️ Les erreurs — protocole à suivre
 
-Quatre formes d'échec, quatre conduites. Applique-les à la lettre.
+Cinq formes d'échec, cinq conduites. Applique-les à la lettre.
 
 ### 1. `-32602` — tes arguments ne respectent pas le schéma
 
@@ -207,8 +239,8 @@ Le serveur **n'a pas exécuté** l'outil. La réponse liste chaque problème :
 
 ```json
 {"jsonrpc":"2.0","id":5,"error":{"code":-32602,
- "message":"Arguments invalides : `arguments.text` : au moins 1 caractère(s)",
- "data":{"issues":["`arguments.text` : au moins 1 caractère(s)"]}}}
+ "message":"Invalid arguments: `arguments.text`: must be at least 1 character(s)",
+ "data":{"issues":["`arguments.text`: must be at least 1 character(s)"]}}}
 ```
 
 **Conduite** : corrige les arguments **en fonction des `issues`** et réessaie.
@@ -219,23 +251,41 @@ et demande-lui la valeur manquante. Ne répète jamais l'appel identique.
 
 ```json
 {"jsonrpc":"2.0","id":6,"result":{
+  "resultType":"complete",
   "content":[{"type":"text","text":"division par zéro"}],
-  "isError":true,"resultType":"complete"}}
-}
+  "isError":true,
+  "structuredContent":{"error":{"code":"unclassified","message":"division par zéro","retryable":false}}}}
 ```
 
+`structuredContent.error` classe l'échec : `retryable: false` signifie que
+rejouer la même requête donnera le même échec ; `retryable: true` (avec
+parfois `retryAfterMs`) signifie que tu peux retenter, après ce délai.
+
 **Conduite** : l'échec est **logique** (exemple : division par zéro), pas un
-bug de transport. N'insiste pas à l'identique ; explique la cause à l'humain
+bug de transport. Si `retryable` vaut `false`, n'insiste pas à l'identique ; explique la cause à l'humain
 (ici : « b vaut 0, une division par zéro est impossible ») et propose une
 alternative si pertinente.
 
-### 3. `-32601` — outil inconnu
+### 3. `-32602` avec `Unknown tool: …` — outil inconnu
 
-Tu as appelé un nom qui n'existe pas. **Conduite** : relance `tools/list`,
-relis le catalogue, réessaie avec le bon nom. Si l'outil n'y est vraiment
-pas : dis à l'humain que ce serveur ne l'expose pas.
+Tu as appelé un nom qui n'existe pas (même code que les arguments invalides,
+mais le message commence par `Unknown tool` et il n'y a pas d'`issues`).
+**Conduite** : relance `tools/list`, relis le catalogue, réessaie avec le bon
+nom. Si l'outil n'y est vraiment pas : dis à l'humain que ce serveur ne
+l'expose pas.
 
-### 4. Serveur injoignable (timeout, connexion refusée)
+### 4. Erreurs de protocole — `-32020`, `-32022`, `-32601`
+
+| Code | Statut HTTP | Cause | Conduite |
+|---|---|---|---|
+| `-32020` | `400` | en-tête `MCP-Protocol-Version`, `Mcp-Method` ou `Mcp-Name` absent : serveur en profil strict | rejoue avec la forme complète de [Joindre le serveur](#-joindre-le-serveur) |
+| `-32022` | `400` | version de protocole non servie | lis `error.data.supported` et reprends avec une version de cette liste |
+| `-32601` | `404` | méthode inconnue — ou `initialize` / `ping` sur un serveur strict | n'utilise que `tools/list` et `tools/call` ; en strict, pas d'`initialize` |
+
+Ce ne sont pas des échecs de l'outil : rien n'a été exécuté. Corrige la
+forme de la requête, une fois ; si l'erreur persiste, dis-le à l'humain.
+
+### 5. Serveur injoignable (timeout, connexion refusée)
 
 **Conduite** : sonde `GET /health`. S'il ne répond pas : informe l'humain que
 le serveur est arrêté ou injoignable — ne prétends jamais avoir exécuté
@@ -246,7 +296,7 @@ l'outil, et ne simule jamais son résultat.
 1. **Découvre, puis appelle** — jamais l'inverse (`tools/list` avant tout).
 2. **Le schéma fait foi** — aucun paramètre inventé, aucune borne dépassée.
 3. **`-32602`** : corrige selon les `issues` (2 essais max). **`isError`** :
-   explique, n'insiste pas.
+   explique, n'insiste pas si `retryable` vaut `false`.
 4. **Effets de bord** (`counter`) : appelle seulement si l'humain le veut.
 5. **Rapporte fidèlement** : ta réponse à l'humain cite l'outil utilisé et
    les valeurs retournées — sans déformer, sans embellir, sans omettre un

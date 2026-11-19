@@ -1,5 +1,5 @@
 <div align="center">
-  <h1><font color="#2ECC71">Mon premier serveur MCP en Rust</font></h1>
+  <h1><font color="#2ECC71">Mon serveur MCP</font></h1>
   <p><strong>Le guide ULTRA débutant pour créer vos propres outils IA avec <a href="https://github.com/DeamonDev888/litemcp">LiteMCP</a> — la lib MCP la plus légère en mémoire et la plus rapide au monde.</strong></p>
   <p>Aucune connaissance de MCP requise. Si vous savez lancer un terminal, vous pouvez suivre.</p>
   <p>
@@ -10,6 +10,7 @@
     <a href="https://github.com/DeamonDev888/litemcp"><img src="https://img.shields.io/github/stars/DeamonDev888/litemcp?style=for-the-badge&label=%E2%AD%90%20LiteMCP&color=2ECC71" alt="Étoilez LiteMCP sur GitHub"></a>
   </p>
   <p>📖 <strong>Version web de ce tuto</strong> : <a href="https://deamondev888.github.io/litemcp-tuto/">deamondev888.github.io/litemcp-tuto</a></p>
+  <p>🤖 <strong>Le tuto pour votre agent IA</strong> (le mode d'emploi à lui donner une fois le serveur construit) : <a href="https://deamondev888.github.io/litemcp-tuto/agent.html">deamondev888.github.io/litemcp-tuto/agent.html</a></p>
   <p>⭐ Si ce tuto vous aide, la plus belle façon de dire merci :
      <a href="https://github.com/DeamonDev888/litemcp" class="etoile">mettez une <strong>étoile à la lib LiteMCP</strong></a> — c'est gratuit, et c'est ce qui la fait vivre. Merci !</p>
 </div>
@@ -192,7 +193,7 @@ Ouvrez `Cargo.toml` et ajoutez les dépendances sous `[dependencies]` :
 
 ```toml
 [dependencies]
-litemcp = "0.11"
+litemcp = "0.12"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
@@ -230,6 +231,7 @@ fn main() -> std::io::Result<()> {
     println!("Mon premier MCP écoute sur http://127.0.0.1:8080/mcp");
 
     ServerBuilder::new("mon-premier-mcp", "0.1.0")
+        .legacy(true)                       // parle aussi aux clients MCP d'avant 2026-07-28
         .tool(
             "hello",                        // 1. le nom de l'outil
             "Dit bonjour à quelqu'un",      // 2. la description (lue par l'IA)
@@ -252,6 +254,7 @@ Lisons ce programme **ligne par ligne** :
 | `use litemcp::prelude::*;` | importe tout le nécessaire de LiteMCP (`ServerBuilder`, `zod`, annotations…) |
 | `fn main() -> std::io::Result<()>` | le point d'entrée ; le `Result` permet d'écrire `?` pour propager les erreurs réseau proprement |
 | `ServerBuilder::new("mon-premier-mcp", "0.1.0")` | crée le serveur : son **nom** et sa **version** (c'est ce que l'IA verra) |
+| `.legacy(true)` | **mode de tolérance** : le serveur accepte aussi les clients MCP d'avant la révision `2026-07-28` (ceux qui commencent par `initialize`) et les appels `curl` courts de l'étape 5. Sans cette ligne, LiteMCP est en **profil strict** — expliqué à l'étape 5 |
 | `.tool("hello", "Dit bonjour…", \|args\| …)` | déclare UN outil : nom + description + fonction. C'est le cœur du tuto |
 | `args.get("name")` | lit le champ `name` dans le JSON envoyé par l'IA |
 | `.unwrap_or("monde")` | si l'IA n'a pas envoyé `name`, on salue « monde » (valeur par défaut) |
@@ -328,9 +331,9 @@ Réponse :
 ```json
 {"jsonrpc":"2.0","id":1,
  "result":{
+   "resultType":"complete",
    "content":[{"type":"text","text":"{\"message\":\"Bonjour, Alex !\"}"}],
    "structuredContent":{"message":"Bonjour, Alex !"},
-   "resultType":"complete",
    "_meta":{"io.modelcontextprotocol/serverInfo":{"name":"mon-premier-mcp","version":"0.1.0"}}}}
 ```
 
@@ -359,6 +362,37 @@ curl -s http://127.0.0.1:8080/mcp \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hello","arguments":{}}}'
 # → {"message":"Bonjour, monde !"}
 ```
+
+### Pourquoi ces `curl` sont si courts : `.legacy(true)`
+
+Depuis LiteMCP **0.11**, un serveur est par défaut en **profil strict** : il
+suit la révision `2026-07-28` du protocole, où **chaque** requête porte trois
+en-têtes et un petit bloc `_meta`. C'est ce que font les clients MCP récents,
+tout seuls. À la main, le même appel s'écrit :
+
+```bash
+curl -s http://127.0.0.1:8080/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'MCP-Protocol-Version: 2026-07-28' \
+  -H 'Mcp-Method: tools/call' \
+  -H 'Mcp-Name: hello' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}},"name":"hello","arguments":{"name":"Alex"}}}'
+```
+
+La ligne `.legacy(true)` de l'étape 3 rend le serveur **tolérant** : il
+accepte cette forme complète **et** la forme courte utilisée dans ce tuto,
+**et** les clients plus anciens qui commencent par `initialize`.
+
+> ⚠️ **Vous recevez `400` avec `-32020 MCP-Protocol-Version header is required` ?**
+> Votre serveur est en profil strict : il manque `.legacy(true)` dans le
+> code (étape 3), ou alors envoyez la forme complète ci-dessus. Et
+> `404` + `-32601` sur `initialize` a la même cause.
+
+> 🔄 Le protocole MCP et LiteMCP évoluent vite : si une commande de cette
+> page ne répond plus comme indiqué, la référence à jour est le
+> [README de LiteMCP](https://github.com/DeamonDev888/litemcp#readme)
+> (section de démarrage et tableau « Dépannage »).
 
 ### Lister les outils : `tools/list`
 
@@ -437,7 +471,12 @@ sur le fichier → **Ouvrir**.)
 > [github.com/DeamonDev888/mcp-control/releases](https://github.com/DeamonDev888/mcp-control/releases)
 >
 > Les liens ci-dessus pointent toujours vers la **dernière version publiée** —
-> ils ne se périment pas.
+> ils ne se périment pas. Cette étape a été relue avec **MCP Control v0.7.21**
+> (14 novembre 2026).
+>
+> 🖥️ **Serveur sans écran ?** Chaque version fournit aussi un binaire en ligne
+> de commande : `mcp-control-cli-windows-x86_64.exe`,
+> `mcp-control-cli-linux-x86_64`, `mcp-control-cli-macos-universal`.
 
 ### En faire une vraie app supervisée
 
@@ -457,9 +496,14 @@ Dans le panneau de gauche, cliquez sur **« + Ajouter un serveur »** :
    * **Workdir** (option) : le dossier de votre projet ;
 5. Cliquez sur **« Ajouter & sonder »**.
 
+> 💡 Vous avez déjà un bloc `mcpServers` (celui de Claude Desktop, par exemple) ?
+> Collez-le dans cette même fenêtre : MCP Control importe les serveurs qu'il
+> contient et liste ceux qu'il écarte, avec le motif.
+
 La carte apparaît avec des boutons **Start / Stop** : MCP Control
-démarre votre app, la **relance si elle plante** (flag `auto_restart`), et
-peut la lancer au démarrage de la machine. Le port et l'adresse restent des
+démarre votre app, la **relance si elle plante** (flag `auto_restart` —
+relances espacées de 5, 10, 20 puis 40 s, puis abandon : pas de boucle
+infinie sur une app cassée), et peut la lancer au démarrage de la machine. Le port et l'adresse restent des
 détails internes — tout se pilote depuis l'interface, **comme une vraie
 application**.
 
@@ -472,9 +516,13 @@ application**.
 | Élément | Signification |
 |---|---|
 | Point **vert + état `UP`** | le serveur répond aux sondes MCP (`initialize` + `tools/list`) |
-| Badge **« LiteMCP »** | MCP Control a reconnu le framework par fingerprint : réponse en `2026-07-28` + sonde `GET /health` « ok » |
+| Badge **« LiteMCP »** | MCP Control a reconnu le framework par fingerprint : réponse à `initialize` + sonde `GET /health` « ok » |
 | Compteur **`4`** à côté du nom | vos quatre outils, découverts via `tools/list` |
 | Détail de la carte | la liste complète (`hello`, `analyze`, `divide`, `counter`), la latence, le journal temps réel |
+
+> ⚠️ **Le serveur reste gris ou sans badge ?** Vérifiez que `.legacy(true)`
+> est bien dans votre code (étape 3) : la sonde `initialize` n'est servie que
+> dans ce mode. Recompilez (`cargo build --release`), puis relancez l'app.
 
 <p align="center">
   <img src="assets/mcp-control.png" alt="Le serveur du tuto vu dans MCP Control" width="820">
@@ -490,7 +538,7 @@ machines.
 > 💡 **Alternative officielle** : `npx @modelcontextprotocol/inspector` (l'inspecteur du protocole,
 > transport « Streamable HTTP », URL `http://127.0.0.1:8080/mcp`) fait le même travail de découverte
 > en ponctuel. MCP Control va plus loin : supervision continue, détection multi-machines
-> (LAN, SSH), boutique de 64 MCP installables en un clic.
+> (LAN, SSH), boutique de 63 MCP installables en un clic, 38 frameworks reconnus.
 
 ### 🌉 Bonus — le mode gateway : votre agent pilote tout, avec UNE ligne de config
 
@@ -530,7 +578,8 @@ changé.) Redémarrez l'agent, puis demandez naturellement : *« montre-moi mes
 serveurs MCP »*, *« relance mon-premier-mcp »* ou *« appelle l'outil hello de
 mon-premier-mcp avec name = Alice »*. Tout passe par les mêmes circuits que
 les boutons de l'interface : mêmes validations, même journal. En local, rien
-à sécuriser : le gateway n'écoute que sur votre machine.
+à sécuriser : le gateway n'écoute que sur votre machine. Si vous l'exposez au
+réseau, MCP Control exige alors son **code d'accès** (en-tête `X-MCC-Access`).
 
 ---
 
@@ -613,8 +662,8 @@ curl -s http://127.0.0.1:8080/mcp \
 
 ```json
 {"jsonrpc":"2.0","id":1,"error":{"code":-32602,
- "message":"Arguments invalides : `arguments.text` : au moins 1 caractère(s)",
- "data":{"issues":["`arguments.text` : au moins 1 caractère(s)"]}}}
+ "message":"Invalid arguments: `arguments.text`: must be at least 1 character(s)",
+ "data":{"issues":["`arguments.text`: must be at least 1 character(s)"]}}}
 ```
 
 `-32602` = « arguments invalides », et `error.data.issues` liste **chaque**
@@ -850,7 +899,7 @@ décisions de l'IA.
 Activez la feature `macros` dans `Cargo.toml` :
 
 ```toml
-litemcp = { version = "0.11", features = ["macros"] }
+litemcp = { version = "0.12", features = ["macros"] }
 ```
 
 Le schéma peut alors être **dérivé des types des paramètres** d'une fonction
@@ -866,6 +915,7 @@ fn add(a: i64, b: i64) -> litemcp::ToolResult {
 
 fn main() -> std::io::Result<()> {
     ServerBuilder::new("mon-premier-mcp", "0.1.0")
+        .legacy(true)
         .with_tool(register_add)   // la macro a généré register_add
         .bind("127.0.0.1:8080")?
         .serve()
@@ -885,6 +935,10 @@ Votre app tourne (idéalement supervisée par MCP Control). Pour brancher
 un agent IA, vous écrivez **une seule fois** où elle se trouve — après quoi
 l'agent découvre tout seul vos outils : vous ne manipulez plus jamais
 d'adresse ni de JSON.
+
+> 💡 Beaucoup de clients ouvrent encore la conversation par `initialize`
+> (protocole d'avant `2026-07-28`). C'est `.legacy(true)` (étape 3) qui leur
+> permet de se connecter ; les clients récents, eux, passent dans les deux modes.
 
 ### Claude Desktop / Claude Code
 
@@ -945,7 +999,7 @@ l'appeler grâce au schéma publié par `tools/list`. C'est toute la magie de MC
 
   ```ini
   [Unit]
-  Description=Mon premier serveur MCP
+  Description=Mon serveur MCP
   After=network.target
 
   [Service]
@@ -1003,7 +1057,8 @@ l'appeler grâce au schéma publié par `tools/list`. C'est toute la magie de MC
 |---|---|---|
 | `-32602` + `issues` | arguments hors schéma | ❌ non |
 | `isError: true` | le handler a renvoyé `Err(msg)` | ✅ oui |
-| `-32601` | outil inconnu | ❌ non |
+| `-32602` + `Unknown tool: …` | outil inconnu | ❌ non |
+| `-32601` | méthode inconnue (ou `initialize` sans `.legacy(true)`) | ❌ non |
 | `-32700` | JSON invalide | ❌ non |
 
 ---

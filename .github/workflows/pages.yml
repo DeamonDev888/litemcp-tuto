@@ -59,7 +59,7 @@ jobs:
             -f gfm+gfm_auto_identifiers -t html5 -s \
             --toc --toc-depth=2 \
             --highlight-style breezedark \
-            --metadata title="Mon premier serveur MCP en Rust — le tuto LiteMCP" \
+            --metadata title="Mon serveur MCP — le tuto LiteMCP" \
             --metadata lang=fr \
             --include-before-body site/_avant.html \
             --include-after-body site/_apres.html \

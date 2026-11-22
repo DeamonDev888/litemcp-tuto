@@ -1,0 +1,55 @@
+<figure class="flow">
+<svg viewBox="0 0 1000 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="flow-titre flow-desc">
+<title id="flow-titre">Le trajet d'un appel d'outil MCP</title>
+<desc id="flow-desc">Vous posez une question à un agent IA ; l'agent appelle un outil de votre serveur MCP ; le serveur répond ; l'agent formule la réponse.</desc>
+<defs>
+<marker id="fleche" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2ecc71"/></marker>
+<marker id="fleche-retour" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3d5a80"/></marker>
+<linearGradient id="lueur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2ecc71" stop-opacity="0.20"/><stop offset="1" stop-color="#2ecc71" stop-opacity="0"/></linearGradient>
+</defs>
+<g class="flow-noeuds">
+<rect x="30" y="78" width="160" height="84" rx="16" fill="#0f1521" stroke="#2a3446"/>
+<circle cx="62" cy="108" r="9" fill="none" stroke="#2ecc71" stroke-width="2"/>
+<circle cx="62" cy="105" r="3.2" fill="#2ecc71"/>
+<path d="M52 120 q10 -9 20 0" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round"/>
+<text x="82" y="112" fill="#e8eef5" font-size="17" font-weight="700" font-family="inherit">Vous</text>
+<text x="82" y="132" fill="#8fa0b5" font-size="11" font-family="inherit">terminal &#183; application</text>
+<rect x="390" y="58" width="220" height="124" rx="18" fill="#0f1521" stroke="#2a3446"/>
+<circle cx="424" cy="88" r="10" fill="#12202b" stroke="#2ecc71" stroke-width="1.5"/>
+<circle cx="421" cy="86" r="1.8" fill="#2ecc71"/><circle cx="428" cy="86" r="1.8" fill="#2ecc71"/>
+<path d="M420 92 q5 3 9 0" fill="none" stroke="#2ecc71" stroke-width="1.5" stroke-linecap="round"/>
+<text x="444" y="94" fill="#e8eef5" font-size="17" font-weight="700" font-family="inherit">Agent IA</text>
+<text x="410" y="126" fill="#8fa0b5" font-size="11" font-family="inherit">Claude &#183; Hermes &#183; Gemini CLI</text>
+<rect x="410" y="140" width="180" height="26" rx="8" fill="#0b0f16" stroke="#1d2432"/>
+<text x="422" y="157" fill="#7ee2a8" font-size="11" font-family="ui-monospace,Consolas,monospace">tools/call</text>
+<rect x="760" y="46" width="210" height="148" rx="18" fill="#0f1521" stroke="#2a3446" class="flow-serveur"/>
+<text x="775" y="74" fill="#e8eef5" font-size="15" font-weight="700" font-family="inherit">Votre serveur MCP</text>
+<rect class="puce" x="775" y="90" width="84" height="24" rx="7" fill="#0b0f16" stroke="#26543a"/>
+<text x="786" y="106" fill="#9fe6bb" font-size="11" font-family="ui-monospace,Consolas,monospace">hello</text>
+<rect class="puce" x="868" y="90" width="86" height="24" rx="7" fill="#0b0f16" stroke="#26543a"/>
+<text x="879" y="106" fill="#9fe6bb" font-size="11" font-family="ui-monospace,Consolas,monospace">analyze</text>
+<rect class="puce" x="775" y="124" width="84" height="24" rx="7" fill="#0b0f16" stroke="#26543a"/>
+<text x="786" y="140" fill="#9fe6bb" font-size="11" font-family="ui-monospace,Consolas,monospace">divide</text>
+<rect class="puce" x="868" y="124" width="86" height="24" rx="7" fill="#0b0f16" stroke="#26543a"/>
+<text x="879" y="140" fill="#9fe6bb" font-size="11" font-family="ui-monospace,Consolas,monospace">counter</text>
+<text x="775" y="172" fill="#8fa0b5" font-size="11" font-family="inherit">4 outils, du Rust ordinaire</text>
+</g>
+<g class="flow-fleches" stroke-linecap="round">
+<line x1="192" y1="104" x2="384" y2="104" stroke="#2ecc71" stroke-width="2" marker-end="url(#fleche)"/>
+<text x="214" y="94" fill="#7ee2a8" font-size="11" font-family="inherit">votre question</text>
+<line x1="612" y1="104" x2="754" y2="104" stroke="#2ecc71" stroke-width="2" marker-end="url(#fleche)"/>
+<text x="632" y="94" fill="#7ee2a8" font-size="11" font-family="inherit">appel d'outil</text>
+<line x1="754" y1="150" x2="612" y2="150" stroke="#3d5a80" stroke-width="2" marker-end="url(#fleche-retour)"/>
+<text x="640" y="168" fill="#8fa0b5" font-size="11" font-family="inherit">r&#233;sultat JSON</text>
+<line x1="384" y1="150" x2="192" y2="150" stroke="#3d5a80" stroke-width="2" marker-end="url(#fleche-retour)"/>
+<text x="236" y="168" fill="#8fa0b5" font-size="11" font-family="inherit">r&#233;ponse</text>
+</g>
+<g class="flow-paquets">
+<circle class="paquet p1" cx="192" cy="104" r="4.5" fill="#2ecc71"/>
+<circle class="paquet p2" cx="612" cy="104" r="4.5" fill="#2ecc71"/>
+<circle class="paquet p3" cx="754" cy="150" r="4.5" fill="#7fb2e5"/>
+<circle class="paquet p4" cx="384" cy="150" r="4.5" fill="#7fb2e5"/>
+</g>
+<text x="500" y="226" text-anchor="middle" fill="#6e7d91" font-size="12" font-family="inherit">Rien de magique : votre code, appel&#233; au bon moment, avec les bons arguments.</text>
+</svg>
+</figure>

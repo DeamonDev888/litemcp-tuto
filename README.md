@@ -116,9 +116,9 @@ dans son [benchmark 9 frameworks](https://github.com/DeamonDev888/litemcp/blob/m
 
 | | |
 |---|---|
-| 🪶 **Minuscule** | 2 dépendances seulement (`serde` + `serde_json`) — et **5,1 Mo de RAM** en charge |
+| 🪶 **Minuscule** | 3 dépendances externes (`serde`, `serde_json`, `getrandom`), plus `litemcp-macros` par défaut — et **5,1 Mo de RAM** en charge |
 | 🚀 **Sans usine à gaz** | pas de tokio, pas de framework web — les threads standards de Rust |
-| ⚡ **La plus rapide** | **0,08 ms** par appel d'outil en boucle locale — 2× plus rapide que le meilleur des 8 autres frameworks benchés |
+| ⚡ **Parmi les plus rapides** | **0,08 ms** par appel d'outil (mesure 0.7.0, boucle locale Windows) — 2× plus rapide que la meilleure des 8 autres implémentations benchées |
 | ✍️ **Quelques lignes suffisent** | votre premier serveur tient en 10 lignes |
 | 🛡️ **Sûr par défaut** | validation des entrées, garde DNS-rebinding, corps limité |
 | 📏 **Spéc 2026-07-28** | le MCP stateless moderne (Streamable HTTP), à la lettre |
@@ -207,8 +207,10 @@ Téléchargez-les :
 cargo fetch
 ```
 
-> 💡 `serde` et `serde_json` sont les **seules** dépendances que LiteMCP
-> embarque. Rien d'autre ne sera ajouté à votre projet.
+> 💡 Le cœur de LiteMCP ne dépend que de **trois** bibliothèques externes :
+> `serde`, `serde_json` et `getrandom` (le générateur d'aléa du système). La
+> feature `macros`, active par défaut, ajoute la crate locale `litemcp-macros`.
+> Rien d'autre ne sera ajouté à votre projet.
 
 > 🔄 **La doc suit les versions** : le numéro ci-dessus est mis à jour
 > **automatiquement** dès que LiteMCP est publié — la lib notifie ce dépôt à
@@ -365,7 +367,7 @@ curl -s http://127.0.0.1:8080/mcp \
 
 ### Pourquoi ces `curl` sont si courts : `.legacy(true)`
 
-Depuis LiteMCP **0.11**, un serveur est par défaut en **profil strict** : il
+Depuis LiteMCP **0.10.6**, un serveur est par défaut en **profil strict** : il
 suit la révision `2026-07-28` du protocole, où **chaque** requête porte trois
 en-têtes et un petit bloc `_meta`. C'est ce que font les clients MCP récents,
 tout seuls. À la main, le même appel s'écrit :
@@ -471,8 +473,8 @@ sur le fichier → **Ouvrir**.)
 > [github.com/DeamonDev888/mcp-control/releases](https://github.com/DeamonDev888/mcp-control/releases)
 >
 > Les liens ci-dessus pointent toujours vers la **dernière version publiée** —
-> ils ne se périment pas. Cette étape a été relue avec **MCP Control v0.7.21**
-> (14 novembre 2026).
+> ils ne se périment pas. Cette étape a été relue avec **MCP Control v0.8.0**
+> (22 novembre 2026).
 >
 > 🖥️ **Serveur sans écran ?** Chaque version fournit aussi un binaire en ligne
 > de commande : `mcp-control-cli-windows-x86_64.exe`,
@@ -502,8 +504,9 @@ Dans le panneau de gauche, cliquez sur **« + Ajouter un serveur »** :
 
 La carte apparaît avec des boutons **Start / Stop** : MCP Control
 démarre votre app, la **relance si elle plante** (flag `auto_restart` —
-relances espacées de 5, 10, 20 puis 40 s, puis abandon : pas de boucle
-infinie sur une app cassée), et peut la lancer au démarrage de la machine. Le port et l'adresse restent des
+backoff exponentiel de 5 s à 5 min, abandon après 5 échecs consécutifs : pas
+de boucle infinie sur une app cassée), et peut la lancer au démarrage de la
+machine. Le port et l'adresse restent des
 détails internes — tout se pilote depuis l'interface, **comme une vraie
 application**.
 
@@ -517,8 +520,8 @@ application**.
 |---|---|
 | Point **vert + état `UP`** | le serveur répond aux sondes MCP (`initialize` + `tools/list`) |
 | Badge **« LiteMCP »** | MCP Control a reconnu le framework par fingerprint : réponse à `initialize` + sonde `GET /health` « ok » |
-| Compteur **`4`** à côté du nom | vos quatre outils, découverts via `tools/list` |
-| Détail de la carte | la liste complète (`hello`, `analyze`, `divide`, `counter`), la latence, le journal temps réel |
+| Compteur **`1`** à côté du nom | votre outil `hello` **à ce stade** — `analyze`, `divide` et `counter` arrivent aux étapes 7 à 9 (la capture ci-dessous montre le serveur complet) |
+| Détail de la carte | la liste des outils servis (`hello`, puis les trois autres), la latence, le journal temps réel |
 
 > ⚠️ **Le serveur reste gris ou sans badge ?** Vérifiez que `.legacy(true)`
 > est bien dans votre code (étape 3) : la sonde `initialize` n'est servie que
@@ -559,7 +562,8 @@ Dans Claude Desktop (ou tout client MCP standard) :
 {
   "mcpServers": {
     "mcp-control": {
-      "url": "http://127.0.0.1:5090/mcp"
+      "command": "mcp-control",
+      "args": ["bridge"]
     }
   }
 }
@@ -570,8 +574,13 @@ Dans Hermes Agent (config.yaml) :
 ```yaml
 mcp:
   mcp-control:
-    url: "http://127.0.0.1:5090/mcp"
+    command: mcp-control
+    args: ["bridge"]
 ```
+
+> Depuis MCP Control 0.8.0, `/mcp` exige une requête **signée** (Ed25519) : une URL seule
+> rend `401`. Le pont `bridge` s'en charge, après un appairage unique :
+> `mcp-control auth pair http://127.0.0.1:5090`.
 
 (`5090` est le port de l'interface — visible dans les réglages si vous l'avez
 changé.) Redémarrez l'agent, puis demandez naturellement : *« montre-moi mes
@@ -579,7 +588,8 @@ serveurs MCP »*, *« relance mon-premier-mcp »* ou *« appelle l'outil hello d
 mon-premier-mcp avec name = Alice »*. Tout passe par les mêmes circuits que
 les boutons de l'interface : mêmes validations, même journal. En local, rien
 à sécuriser : le gateway n'écoute que sur votre machine. Si vous l'exposez au
-réseau, MCP Control exige alors son **code d'accès** (en-tête `X-MCC-Access`).
+réseau, MCP Control exige alors une **signature** : appairage initial
+(`mcp-control auth pair <url>`), puis pont `bridge` ou client signé.
 
 ---
 
@@ -667,7 +677,7 @@ curl -s http://127.0.0.1:8080/mcp \
 ```
 
 `-32602` = « arguments invalides », et `error.data.issues` liste **chaque**
-problème, en français, champ par champ (texte trop court, champ inconnu,
+problème, en anglais, champ par champ (texte trop court, champ inconnu,
 mauvais type…). C'est ce niveau de détail qui permet à l'IA de se corriger
 elle-même et de rappeler l'outil correctement.
 
@@ -726,7 +736,7 @@ curl -s http://127.0.0.1:8080/mcp \
 
 > 💡 Les deux outils qui suivent sont **optionnels** — ils ne sont pas
 > dans le projet complet du dépôt (qui reste à 4 outils). Ils montrent
-> deux schémas de la 0.6 que vous exhaled plus tard.
+> deux schémas plus complets, utiles dès que vos outils se compliquent.
 
 **`zod::record(valeur)`** — un objet dont les **clés sont libres** mais
 dont les **valeurs sont typées** (un dictionnaire). Il faut d'abord le
@@ -778,7 +788,7 @@ struct LevelArgs {
 ```
 
 `level: 2` passe ; `level: 9` est refusé en `-32602` avec
-« doit être l'un de 1, 2, 3 ».
+`must be one of 1, 2, 3`.
 
 ---
 
@@ -815,7 +825,8 @@ curl -s http://127.0.0.1:8080/mcp -H 'Content-Type: application/json' \
 # Et la division par zéro échoue PROPREMENT :
 curl -s http://127.0.0.1:8080/mcp -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"divide","arguments":{"a":10,"b":0}}}'
-# → {"result":{"isError":true,"content":[{"type":"text","text":"division par zéro"}]}}
+# → {"result":{"resultType":"complete","isError":true,"structuredContent":
+#     {"error":{"code":"unclassified","message":"division par zéro","retryable":false}}}}   (content omis)
 ```
 
 Le serveur, lui, **continue de tourner** dans les deux cas : une erreur
@@ -896,7 +907,8 @@ décisions de l'IA.
 
 ## 🎁 Bonus — La macro `#[tool]`
 
-Activez la feature `macros` dans `Cargo.toml` :
+La feature `macros` est **active par défaut** : rien à ajouter. Si vous l'avez
+désactivée (`default-features = false`), réactivez-la :
 
 ```toml
 litemcp = { version = "0.12", features = ["macros"] }
@@ -991,10 +1003,15 @@ l'appeler grâce au schéma publié par `tools/list`. C'est toute la magie de MC
   plus une adresse en argument (`mon-premier-mcp.exe 127.0.0.1:8180`) si le port
   8080 est déjà occupé sur votre machine ;
 * **Options du serveur** (chemin de route, timeouts, plafond de connexions,
-  arrêt propre) : [README LiteMCP, section Configuration](https://github.com/DeamonDev888/litemcp#configuration) ;
-* **Sécurité** : par défaut le bind est `127.0.0.1` (local uniquement). Pour
-  exposer sur le réseau, placez le serveur derrière un reverse proxy (nginx)
-  qui apporte TLS et authentification ;
+  arrêt propre) : [README LiteMCP, section Configuration](https://github.com/DeamonDev888/litemcp#configuration-et-valeurs-par-défaut) ;
+* **Sécurité** : il n'y a pas de bind implicite — `.bind(adresse)` est explicite,
+  et `.bind_default()` prend le premier port libre de `23080`–`23099` sur
+  `127.0.0.1`. Dans les deux cas l'écoute reste locale. Pour exposer sur le
+  réseau, LiteMCP **0.12** sait le faire seul : feature
+  [`auth-sign`](https://github.com/DeamonDev888/litemcp/blob/main/docs/auth.md)
+  (requêtes signées Ed25519, droits par outil/ressource/prompt) et feature `tls`
+  (TLS 1.3, certificat en mémoire) ; un reverse proxy (nginx) reste une
+  alternative valable ;
 * **Déploiement en service** (Linux) — extrait systemd :
 
   ```ini
@@ -1014,7 +1031,7 @@ l'appeler grâce au schéma publié par `tools/list`. C'est toute la magie de MC
   (le binaire release compilé à l'[étape 4](#️-étape-4--compiler-et-lancer-votre-application), copié sur le serveur) ;
 * **Exemple de référence** : le serveur démo de validation de LiteMCP
   ([`litemcp-it`](https://github.com/DeamonDev888/litemcp-it)) — mêmes outils
-  que ce tuto, avec 12 tests d'intégration sur de vraies sockets.
+  que ce tuto, avec une suite de tests d'intégration sur de vraies sockets.
 
 ---
 

@@ -29,10 +29,11 @@
 
 Tu es un agent IA conversationnel. Un humain (ton utilisateur) te donne accès à
 un serveur MCP nommé **`mon-premier-mcp`** (version `0.1.0`, framework Rust
-[LiteMCP](https://github.com/DeamonDev888/litemcp) `0.11` — la lib MCP la plus légère
+[LiteMCP](https://github.com/DeamonDev888/litemcp) `0.12` — la lib MCP la plus légère
 en mémoire et la plus rapide au monde, protocole `2026-07-28`, avec le mode de
 tolérance `.legacy(true)` : il accepte aussi les requêtes courtes et les
-clients qui commencent par `initialize`). Ce serveur
+clients qui commencent par `initialize` ; dans ce mode, `initialize` répond
+`2025-11-25`). Ce serveur
 t'offre **quatre outils** — des
 capacités que tu n'as pas nativement :
 
@@ -60,7 +61,7 @@ d'état de connexion à maintenir.
 |---|---|
 | Méthode | `POST` |
 | URL | `http://127.0.0.1:8080/mcp` *(si l'humain t'a donné une autre adresse, utilise la sienne)* |
-| En-têtes | `Content-Type: application/json` et `Accept: application/json` |
+| En-têtes | `Content-Type: application/json` (obligatoire) ; `Accept: application/json` est envoyé par les clients, le serveur ne l'exige pas |
 | Corps | un objet JSON-RPC 2.0 avec un `"id"` unique par requête |
 
 Appel minimal, à la lettre :
@@ -76,11 +77,13 @@ Cette forme courte marche parce que le serveur du tuto est en mode de
 tolérance. Si tu passes par un client MCP (et non par des requêtes écrites à
 la main), ton client gère tout cela pour toi : ne change rien.
 
-> ⚠️ **Si tu reçois `400` avec `-32020`** (`MCP-Protocol-Version header is required`), le
-> serveur est en **profil strict** (révision `2026-07-28`, défaut de LiteMCP depuis la 0.11,
+> ⚠️ **Si tu reçois `400` avec `-32020`** (`MCP-Protocol-Version header is required`, ou une
+> valeur **incohérente** avec le corps — `data` porte alors `body` et `header`), le
+> serveur est en **profil strict** (révision `2026-07-28`, défaut de LiteMCP depuis la 0.10.6,
 > quand il n'a pas `.legacy(true)`). Rejoue alors **chaque** requête avec les en-têtes
 > `Accept: application/json`, `MCP-Protocol-Version: 2026-07-28`, `Mcp-Method: <la méthode>` et,
-> pour `tools/call`, `Mcp-Name: <nom de l'outil>`, et ajoute dans `params` :
+> pour `tools/call` seulement, `Mcp-Name: <nom de l'outil>` (`Mcp-Name` s'omet sur `tools/list`),
+> et ajoute dans `params` :
 > `"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}`.
 > Exemple complet :
 >
@@ -130,7 +133,7 @@ sinon, laisse-le de côté.
 
 Interdictions absolues :
 
-* ❌ inventer un paramètre qui n'est pas dans le schéma ;
+* ❌ inventer un paramètre qu'aucune description ni schéma ne mentionne ;
 * ❌ deviner un nom d'outil au lieu de le lire ;
 * ❌ appeler « pour voir » avec des arguments au hasard.
 
@@ -140,16 +143,18 @@ pas déclencher l'erreur sciemment.
 
 ## 🧰 Le catalogue des outils
 
-Schémas tels que publiés par `tools/list` de ce serveur. Tu peux copier les
-appels tels quels et adapter les valeurs.
+Paramètres attendus par chaque outil. Les schémas publiés sont volontairement
+minimalistes : `analyze` publie un schéma strict ; les trois autres publient un
+objet **ouvert** (`{"type":"object"}`, sans propriétés) et leurs arguments sont
+décrits ici. Tu peux copier les appels tels quels et adapter les valeurs.
 
 ### `hello`
 
-**Description** : « Dit bonjour à quelqu'un. »
+**Description** : « Dit bonjour à quelqu'un »
 **À utiliser quand** : l'humain demande une salutation, une démonstration, ou
 que tu veux vérifier que le serveur répond.
 
-Schéma : objet libre — `name` (chaîne, optionnel) ; absent → `monde`.
+Schéma : objet libre — `name` (chaîne, optionnel) ; absent **ou non-chaîne** → `monde`.
 
 ```json
 {"jsonrpc":"2.0","id":1,"method":"tools/call",
@@ -169,7 +174,7 @@ Réponse réelle — lis le résultat dans `structuredContent` :
 
 ### `analyze`
 
-**Description** : « Statistiques d'un texte (mots, caractères, mot le plus long). »
+**Description** : « Statistiques d'un texte (mots, caractères, mot le plus long) »
 **À utiliser quand** : l'humain demande un compte de mots, la longueur d'un
 texte, le mot le plus long — pas pour autre chose.
 
@@ -200,7 +205,7 @@ Réponse :
 
 ### `divide`
 
-**Description** : « Divise a par b (erreur si b vaut 0). »
+**Description** : « Divise a par b (erreur si b vaut 0) »
 **À utiliser quand** : division exacte demandée. `a` et `b` sont des nombres
 (flottants acceptés).
 
@@ -216,7 +221,7 @@ protocole d'erreur) — ne réessaie pas, explique à l'humain.
 
 ### `counter`
 
-**Description** : « Incrémente et renvoie le compteur interne. »
+**Description** : « Incrémente et renvoie le compteur interne »
 **À utiliser quand** : l'humain veut compter quelque chose (occurrences,
 tours, passages). ⚠️ **Effet de bord** : chaque appel change l'état du
 serveur — deux appels ne renvoient pas la même valeur (`1`, puis `2`, puis
@@ -231,11 +236,19 @@ Réponse : `"structuredContent": {"count": 1}` puis `{"count": 2}`, etc.
 
 ## ⚠️ Les erreurs — protocole à suivre
 
-Cinq formes d'échec, cinq conduites. Applique-les à la lettre.
+Cinq formes d'échec à connaître, cinq conduites. Applique-les à la lettre. Le
+transport peut aussi rendre `403`, `405`, `415`, `503`, `-32700` (JSON illisible)
+ou `-32603` : même règle — **rien n'a été exécuté**, corrige la requête ou
+informe l'humain.
 
 ### 1. `-32602` — tes arguments ne respectent pas le schéma
 
 Le serveur **n'a pas exécuté** l'outil. La réponse liste chaque problème :
+
+En profil strict, un `params` sans `_meta` rend aussi `-32602`, mais **sans**
+`data.issues` (« missing required _meta object in params ») : ce n'est pas un
+problème d'argument mais la forme de la requête — voir
+[Joindre le serveur](#-joindre-le-serveur).
 
 ```json
 {"jsonrpc":"2.0","id":5,"error":{"code":-32602,
@@ -278,7 +291,7 @@ l'expose pas.
 
 | Code | Statut HTTP | Cause | Conduite |
 |---|---|---|---|
-| `-32020` | `400` | en-tête `MCP-Protocol-Version`, `Mcp-Method` ou `Mcp-Name` absent : serveur en profil strict | rejoue avec la forme complète de [Joindre le serveur](#-joindre-le-serveur) |
+| `-32020` | `400` | en-tête `MCP-Protocol-Version`, `Mcp-Method` ou `Mcp-Name` absent **ou incohérent** avec le corps (`data` porte `body`/`header`) : profil strict | rejoue avec la forme complète **et la bonne valeur** ; `Mcp-Name` seulement pour `tools/call` |
 | `-32022` | `400` | version de protocole non servie | lis `error.data.supported` et reprends avec une version de cette liste |
 | `-32601` | `404` | méthode inconnue — ou `initialize` / `ping` sur un serveur strict | n'utilise que `tools/list` et `tools/call` ; en strict, pas d'`initialize` |
 
@@ -294,7 +307,7 @@ l'outil, et ne simule jamais son résultat.
 ## 🤝 Ton contrat de comportement
 
 1. **Découvre, puis appelle** — jamais l'inverse (`tools/list` avant tout).
-2. **Le schéma fait foi** — aucun paramètre inventé, aucune borne dépassée.
+2. **La description et le schéma font foi** — aucun paramètre inventé, aucune borne dépassée.
 3. **`-32602`** : corrige selon les `issues` (2 essais max). **`isError`** :
    explique, n'insiste pas si `retryable` vaut `false`.
 4. **Effets de bord** (`counter`) : appelle seulement si l'humain le veut.
@@ -335,7 +348,9 @@ Ta conduite (trois outils indépendants, appelés dans l'ordre du dialogue) :
 {"jsonrpc":"2.0","id":12,"method":"tools/call",
  "params":{"name":"counter","arguments":{}}}
 ```
-→ `"count": 1`
+→ `"count": N` — le compteur est **partagé** : il part de 1 au premier appel, puis
+s'incrémente à chaque appel, y compris ceux d'autres clients. Le chiffre exact
+dépend donc de l'historique : ne le devine jamais, lis-le.
 
 **Ta réponse à l'humain** :
 

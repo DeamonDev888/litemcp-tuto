@@ -31,29 +31,74 @@ jobs:
       - name: Générer le site (README.md et TUTO-AGENT.md -> HTML)
         run: |
           mkdir -p site
-          # Enveloppe de page (marges, largeur de lecture) + pied de page + retour en haut.
+          # Enveloppe de page : navigation entre les deux documents, barre de
+          # progression de lecture, pied de page, retour en haut.
           cat > site/_avant.html <<'HTML'
-          <div class="page">
+          <div class="progress"></div>
+          <header class="topbar">
+            <a class="marque" href="index.html"><span class="point"></span><span class="nom">LiteMCP · le tuto</span><span class="nom-court">LiteMCP</span></a>
+            <nav>
+              <a href="index.html" data-page="index.html">Tuto humain</a>
+              <a href="agent.html" data-page="agent.html">Mode d'emploi agent</a>
+              <a href="https://github.com/DeamonDev888/litemcp" target="_blank" rel="noopener">GitHub ↗</a>
+            </nav>
+          </header>
+          <main class="page">
           HTML
           cat > site/_apres.html <<'HTML'
-          </div>
+          </main>
           <footer class="site-footer">
             <p>Le code de ce tuto : <a href="https://github.com/DeamonDev888/litemcp-tuto">github.com/DeamonDev888/litemcp-tuto</a><br>
                la lib : <a href="https://github.com/DeamonDev888/litemcp">LiteMCP</a> — <a href="https://github.com/DeamonDev888/litemcp">⭐ mettez-lui une étoile</a>, c'est ce qui la fait vivre · site régénéré depuis le README à chaque push.</p>
           </footer>
-          <a class="haut" href="#" title="Retour en haut">↑</a>
+          <a class="haut" href="#" title="Retour en haut" aria-label="Retour en haut">↑</a>
+          <script src="site.js" defer></script>
           HTML
 
-          # Prépare une source : retire la table des matières du markdown
-          # (le site génère la sienne), réécrit les liens relatifs.
+          # Prépare une source : réécrit le lien vers le code du tuto.
+          # (Le retrait de la table des matières interne et l'insertion du
+          # schéma se font en Python, insensibles à la casse et aux CRLF.)
           preparer () {
             src="$1"; dst="$2"
-            sed '/^## .*Table des matières/,/^---$/d' "$src" > "$dst"
-            sed -i 's|](\./mon-premier-mcp)|](https://github.com/DeamonDev888/litemcp-tuto/tree/main/mon-premier-mcp)|g' "$dst"
+            sed 's|](\./mon-premier-mcp)|](https://github.com/DeamonDev888/litemcp-tuto/tree/main/mon-premier-mcp)|g' "$src" > "$dst"
           }
 
-          # Page 1 : index.html (tuto humain)
           preparer README.md site/tuto.md
+          preparer TUTO-AGENT.md site/agent.md
+
+          python3 - <<'PY'
+          import pathlib
+
+          def sans_sommaire(t):
+              lignes = t.replace("\r\n", "\n").split("\n")
+              debut = None
+              for i, l in enumerate(lignes):
+                  if l.startswith("## ") and "table des mati" in l.lower():
+                      debut = i
+                      break
+              if debut is None:
+                  return "\n".join(lignes)
+              fin = len(lignes) - 1
+              for j in range(debut + 1, len(lignes)):
+                  if lignes[j].strip() == "---":
+                      fin = j
+                      break
+              return "\n".join(lignes[:debut] + lignes[fin + 1:])
+
+          svg = pathlib.Path("assets/hero-flow.svg").read_text(encoding="utf-8").strip()
+
+          h = pathlib.Path("site/tuto.md")
+          t = sans_sommaire(h.read_text(encoding="utf-8"))
+          i = t.index("</div>") + len("</div>")
+          h.write_text(t[:i] + "\n\n" + svg + "\n" + t[i:], encoding="utf-8", newline="\n")
+
+          a = pathlib.Path("site/agent.md")
+          t = sans_sommaire(a.read_text(encoding="utf-8"))
+          i = t.index("</div>") + len("</div>")
+          a.write_text(t[:i] + "\n\n" + svg + "\n" + t[i:], encoding="utf-8", newline="\n")
+          PY
+
+          # Page 1 : index.html (tuto humain)
           sed -i 's|](TUTO-AGENT.md)|](agent.html)|g' site/tuto.md
           pandoc site/tuto.md \
             -f gfm+gfm_auto_identifiers -t html5 -s \
@@ -67,7 +112,6 @@ jobs:
             -o site/index.html
 
           # Page 2 : agent.html (mode d'emploi pour agent IA)
-          preparer TUTO-AGENT.md site/agent.md
           sed -i 's|](README.md)|](index.html)|g; s|](TUTO-AGENT.md)|](agent.html)|g' site/agent.md
           pandoc site/agent.md \
             -f gfm+gfm_auto_identifiers -t html5 -s \
@@ -81,8 +125,9 @@ jobs:
             -o site/agent.html
 
           cp style.css site/style.css
-          # Images du README (captures d'écran) servies telles quelles
+          # Images du README (captures d'écran) et script de confort
           [ -d assets ] && cp -r assets site/ || true
+          cp assets/site.js site/site.js
           rm site/tuto.md site/agent.md site/_avant.html site/_apres.html
 
       - name: Configurer Pages

@@ -362,3 +362,302 @@ tbody tr:hover { background: rgba(46, 204, 113, 0.04); }
   h2 { font-size: 1.3rem; }
   table { border-radius: 10px; }
 }
+
+
+/* =====================================================================
+   Refonte 2026-11-22 — navigation, schéma animé, lecture confortable
+   ===================================================================== */
+
+/* ---------- Barre supérieure (les deux pages + le dépôt) ---------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid var(--bordure);
+  background: rgba(5, 7, 10, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.topbar .marque {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.topbar .marque:hover { text-decoration: none; color: #fff; }
+
+.topbar .point {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--vert-vif);
+  box-shadow: 0 0 12px var(--vert-vif);
+  animation: battement 2.4s ease-in-out infinite;
+}
+@keyframes battement {
+  0%, 100% { opacity: 0.5; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.topbar nav { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.topbar nav a {
+  padding: 0.32rem 0.72rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--texte-2);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+.topbar nav a:hover { color: #fff; background: rgba(46, 204, 113, 0.1); text-decoration: none; }
+.topbar nav a.actif { color: var(--vert-vif); border-color: rgba(46, 204, 113, 0.35); background: rgba(46, 204, 113, 0.1); }
+
+/* ---------- Barre de progression de lecture ---------- */
+
+.progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 60;
+  background: linear-gradient(90deg, #2ecc71, #3fb950);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+@supports (animation-timeline: scroll()) {
+  .progress {
+    animation: progresser linear;
+    animation-timeline: scroll(root);
+  }
+}
+@keyframes progresser { to { transform: scaleX(1); } }
+
+/* ---------- Le schéma animé du trajet d'un appel ---------- */
+
+figure.flow {
+  margin: 0 0 3rem;
+  padding: 1rem 0.75rem 0.5rem;
+  border: 1px solid var(--bordure);
+  border-radius: 18px;
+  background:
+    radial-gradient(700px 240px at 50% 0%, rgba(46, 204, 113, 0.09), transparent 70%),
+    linear-gradient(180deg, #0b1018, #080b11);
+  overflow: hidden;
+}
+figure.flow svg { display: block; width: 100%; height: auto; }
+
+.paquet { opacity: 0; animation: trajet 4.4s linear infinite; animation-delay: var(--retard, 0s); }
+.p1 { --dx: 192px; --retard: 0s; }
+.p2 { --dx: 142px; --retard: 1.1s; }
+.p3 { --dx: -142px; --retard: 2.2s; }
+.p4 { --dx: -192px; --retard: 3.3s; }
+
+@keyframes trajet {
+  0%   { transform: translateX(0); opacity: 0; }
+  2%   { opacity: 1; }
+  21%  { transform: translateX(var(--dx)); opacity: 1; }
+  25%  { transform: translateX(var(--dx)); opacity: 0; }
+  100% { transform: translateX(var(--dx)); opacity: 0; }
+}
+
+.puce { animation: puce-appel 4.4s ease-in-out infinite; }
+@keyframes puce-appel {
+  0%, 40%   { stroke: #26543a; fill: #0b0f16; }
+  52%       { stroke: #2ecc71; fill: #0f2419; }
+  68%, 100% { stroke: #26543a; fill: #0b0f16; }
+}
+
+.flow-serveur { animation: halo-serveur 4.4s ease-in-out infinite; }
+@keyframes halo-serveur {
+  0%, 40%   { stroke: #2a3446; }
+  52%       { stroke: #2ecc71; }
+  70%, 100% { stroke: #2a3446; }
+}
+
+/* ---------- Blocs de code : langue + bouton copier ---------- */
+
+.sourceCode { position: relative; }
+.sourceCode .langage {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.7rem;
+  z-index: 2;
+  color: var(--texte-3);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.sourceCode .copier {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.5rem;
+  z-index: 3;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--bordure-2);
+  border-radius: 7px;
+  background: #121a26;
+  color: var(--texte-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.sourceCode:hover .copier, .sourceCode .copier:focus-visible { opacity: 1; }
+.sourceCode .copier:hover { color: var(--vert-vif); border-color: var(--vert); }
+.sourceCode .copier.fait { color: var(--vert-vif); border-color: var(--vert); opacity: 1; }
+.sourceCode:hover .langage { opacity: 0; }
+
+/* ---------- Ancres de titres ---------- */
+
+h2 .ancre, h3 .ancre {
+  margin-left: 0.45rem;
+  color: var(--texte-3);
+  font-weight: 400;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+h2:hover .ancre, h3:hover .ancre, h2 .ancre:focus-visible, h3 .ancre:focus-visible { opacity: 1; }
+
+/* ---------- Tableaux qui débordent ---------- */
+
+.tableau-defilant { overflow-x: auto; margin: 1.4rem 0; }
+.tableau-defilant table { margin: 0; }
+
+/* ---------- Citations : des encadrés, pas des guillemets ---------- */
+
+blockquote {
+  margin: 1.5rem 0;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--bordure);
+  border-left: 3px solid var(--vert);
+  border-radius: 0 12px 12px 0;
+  background: linear-gradient(90deg, rgba(46, 204, 113, 0.07), rgba(46, 204, 113, 0.01));
+  color: var(--texte-2);
+}
+blockquote p { margin: 0.45rem 0; }
+blockquote p:first-child { margin-top: 0; }
+blockquote p:last-child { margin-bottom: 0; }
+
+/* ---------- Images ---------- */
+
+img { max-width: 100%; height: auto; }
+.page img { border-radius: 10px; }
+div[align="center"] img { border-radius: 4px; }
+
+/* ---------- Sommaire latéral sur grand écran ---------- */
+
+@media (min-width: 1180px) {
+  .page {
+    max-width: 78rem;
+    padding-left: 23rem;
+  }
+  nav#TOC {
+    position: fixed;
+    top: 4.6rem;
+    left: max(1rem, calc(50vw - 38rem));
+    width: 18rem;
+    max-height: calc(100vh - 6.5rem);
+    margin: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #222b3a transparent;
+  }
+  nav#TOC > ul { column-count: 1; }
+  nav#TOC a.actif {
+    color: var(--vert-vif);
+    font-weight: 700;
+  }
+  nav#TOC a.actif::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    background: var(--vert-vif);
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.7);
+    vertical-align: middle;
+  }
+}
+
+/* ---------- Petits écrans ---------- */
+
+@media (max-width: 720px) {
+  .page { padding: 1.25rem 1.1rem 4rem; }
+  .topbar { padding: 0.5rem 0.8rem; }
+  .topbar .marque span.nom { display: none; }
+  .page > div[align="center"] { padding: 2rem 1rem 1.8rem; }
+  .page > div[align="center"] h1 { font-size: 1.9rem; }
+  figure.flow { padding: 0.5rem 0.35rem 0.25rem; }
+  blockquote { padding: 0.8rem 0.9rem; }
+}
+
+/* ---------- Impression ---------- */
+
+@media print {
+  .topbar, .progress, nav#TOC, .haut, figure.flow, .copier { display: none !important; }
+  body { background: #fff; color: #111; }
+  .page { max-width: none; padding: 0; }
+  a { color: #0a5; }
+}
+
+/* ---------- Mouvement réduit ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .paquet, .puce, .flow-serveur, .topbar .point, .progress { animation: none !important; }
+  .paquet { opacity: 0; }
+}
+
+/* ---------- Petits écrans : le schéma défile, le sommaire se plie ---------- */
+
+.topbar .nom-court { display: none; }
+
+@media (max-width: 720px) {
+  .topbar { gap: 0.5rem; padding: 0.45rem 0.7rem; }
+  .topbar nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .topbar nav::-webkit-scrollbar { display: none; }
+  .topbar nav a { padding: 0.28rem 0.55rem; font-size: 0.8rem; white-space: nowrap; }
+  figure.flow { overflow-x: auto; }
+  figure.flow svg { min-width: 680px; }
+  .topbar .nom { display: none; }
+  .topbar .nom-court { display: inline; }
+  details.sommaire-pliant {
+    margin: 0 0 2rem;
+    border: 1px solid var(--bordure);
+    border-radius: 14px;
+    background: linear-gradient(180deg, var(--carte), #0b0f16);
+  }
+  details.sommaire-pliant > summary {
+    padding: 0.9rem 1.1rem;
+    color: var(--texte-2);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    list-style: none;
+  }
+  details.sommaire-pliant > summary::-webkit-details-marker { display: none; }
+  details.sommaire-pliant > summary::before { content: "▸ "; color: var(--vert-vif); }
+  details.sommaire-pliant[open] > summary::before { content: "▾ "; }
+  details.sommaire-pliant nav#TOC {
+    margin: 0;
+    border: none;
+    border-top: 1px solid var(--bordure);
+    border-radius: 0 0 14px 14px;
+    background: transparent;
+  }
+}

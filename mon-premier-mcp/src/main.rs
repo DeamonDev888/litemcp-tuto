@@ -1,7 +1,7 @@
 //! Mon premier serveur MCP — le code complet du tutoriel LiteMCP.
 //!
-//! `cargo run`                      → http://127.0.0.1:8080/mcp
-//! `cargo run -- 127.0.0.1:8180`    → adresse personnalisée (optionnel)
+//! `cargo run`                      → http://127.0.0.1:23080/mcp
+//! `cargo run -- 127.0.0.1:23081`   → adresse personnalisée (optionnel)
 //!
 //! Quatre outils :
 //! - `hello`   (closure brute)        salue quelqu'un — valeur par défaut ;
@@ -23,10 +23,11 @@ struct AnalyzeArgs {
 }
 
 fn main() -> std::io::Result<()> {
-    // Adresse : celle donnée en 1er argument, sinon 127.0.0.1:8080.
+    // Adresse : celle donnée en 1er argument, sinon le défaut de LiteMCP
+    // (23080, premier port de la tranche 23080-23099).
     let addr = std::env::args()
         .nth(1)
-        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
+        .unwrap_or_else(|| DEFAULT_ADDRESS.to_string());
     println!("Mon premier MCP écoute sur http://{addr}/mcp");
 
     // L'état partagé du compteur : il vit dans le processus,

@@ -60,14 +60,14 @@ d'état de connexion à maintenir.
 | Quoi | Valeur |
 |---|---|
 | Méthode | `POST` |
-| URL | `http://127.0.0.1:8080/mcp` *(si l'humain t'a donné une autre adresse, utilise la sienne)* |
+| URL | `http://127.0.0.1:23080/mcp` *(si l'humain t'a donné une autre adresse, utilise la sienne)* |
 | En-têtes | `Content-Type: application/json` (obligatoire) ; `Accept: application/json` est envoyé par les clients, le serveur ne l'exige pas |
 | Corps | un objet JSON-RPC 2.0 avec un `"id"` unique par requête |
 
 Appel minimal, à la lettre :
 
 ```bash
-curl -s http://127.0.0.1:8080/mcp \
+curl -s http://127.0.0.1:23080/mcp \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
@@ -88,7 +88,7 @@ la main), ton client gère tout cela pour toi : ne change rien.
 > Exemple complet :
 >
 > ```bash
-> curl -s http://127.0.0.1:8080/mcp \
+> curl -s http://127.0.0.1:23080/mcp \
 >   -H 'Content-Type: application/json' \
 >   -H 'Accept: application/json' \
 >   -H 'MCP-Protocol-Version: 2026-07-28' \
@@ -101,7 +101,7 @@ Trois règles de survie :
 
 * **`id`** : nombre ou chaîne, unique par requête en cours — il revient dans la
   réponse ; c'est ainsi que tu rapproches requête et réponse ;
-* **Sonde de vie** : `GET http://127.0.0.1:8080/health` répond `ok` (200) si
+* **Sonde de vie** : `GET http://127.0.0.1:23080/health` répond `ok` (200) si
   le serveur vit. Avant de déclarer « le serveur est down », sonde-le ;
 * **Lis toujours le corps JSON**, même quand le statut HTTP est `400` ou
   `404` : c'est le champ `error` (code + message) qui te dit quoi corriger,
@@ -195,7 +195,7 @@ Réponse :
 ```json
 {"jsonrpc":"2.0","id":2,"result":{
   "resultType":"complete",
-  "structuredContent":{"words":5,"chars":18,"longest":"fort"}}}
+  "structuredContent":{"chars":18,"longest":"fort","words":5}}}
 ```
 
 *(abrégée : `content` porte le même objet sous forme de texte.)*
@@ -238,15 +238,18 @@ Réponse : `"structuredContent": {"count": 1}` puis `{"count": 2}`, etc.
 
 Cinq formes d'échec à connaître, cinq conduites. Applique-les à la lettre. Le
 transport peut aussi rendre `403`, `405`, `415`, `503`, `-32700` (JSON illisible)
-ou `-32603` : même règle — **rien n'a été exécuté**, corrige la requête ou
-informe l'humain.
+ou `-32603` (erreur interne). Pour `403`/`405`/`415`/`503`/`-32700`, rien n'a
+été exécuté : corrige la requête ou informe l'humain. Un `-32603` arrive le
+plus souvent avant toute exécution (serveur saturé) — mais après une panique
+de l'outil ou une réponse trop grande, l'outil **a pu tourner** : ne préjuge
+jamais de son effet de bord (pour `counter`, l'état est alors inconnu).
 
 ### 1. `-32602` — tes arguments ne respectent pas le schéma
 
 Le serveur **n'a pas exécuté** l'outil. La réponse liste chaque problème :
 
 En profil strict, un `params` sans `_meta` rend aussi `-32602`, mais **sans**
-`data.issues` (« missing required _meta object in params ») : ce n'est pas un
+`data.issues` (``missing required `_meta` object in params``) : ce n'est pas un
 problème d'argument mais la forme de la requête — voir
 [Joindre le serveur](#-joindre-le-serveur).
 
@@ -293,7 +296,7 @@ l'expose pas.
 |---|---|---|---|
 | `-32020` | `400` | en-tête `MCP-Protocol-Version`, `Mcp-Method` ou `Mcp-Name` absent **ou incohérent** avec le corps (`data` porte `body`/`header`) : profil strict | rejoue avec la forme complète **et la bonne valeur** ; `Mcp-Name` seulement pour `tools/call` |
 | `-32022` | `400` | version de protocole non servie | lis `error.data.supported` et reprends avec une version de cette liste |
-| `-32601` | `404` | méthode inconnue — ou `initialize` / `ping` sur un serveur strict | n'utilise que `tools/list` et `tools/call` ; en strict, pas d'`initialize` |
+| `-32601` | `404` | méthode inconnue — ou `initialize` / `ping` sur un serveur strict, une fois les en-têtes complets (nus, c'est `-32020` d'abord) | n'utilise que `tools/list` et `tools/call` ; en strict, pas d'`initialize` |
 
 Ce ne sont pas des échecs de l'outil : rien n'a été exécuté. Corrige la
 forme de la requête, une fois ; si l'erreur persiste, dis-le à l'humain.

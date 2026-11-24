@@ -230,7 +230,7 @@ Remplacez **tout** le contenu de `src/main.rs` par :
 use litemcp::prelude::*;
 
 fn main() -> std::io::Result<()> {
-    println!("Mon premier MCP écoute sur http://127.0.0.1:8080/mcp");
+    println!("Mon premier MCP écoute sur http://127.0.0.1:23080/mcp");
 
     ServerBuilder::new("mon-premier-mcp", "0.1.0")
         .legacy(true)                       // parle aussi aux clients MCP d'avant 2026-07-28
@@ -244,7 +244,7 @@ fn main() -> std::io::Result<()> {
                 Ok(serde_json::json!({ "message": format!("Bonjour, {name} !") }))
             },
         )
-        .bind("127.0.0.1:8080")?   // le serveur écoute sur le port 8080
+        .bind("127.0.0.1:23080")?  // 23080 : le port par défaut de LiteMCP
         .serve()                   // bloque ici et répond aux requêtes
 }
 ```
@@ -261,8 +261,17 @@ Lisons ce programme **ligne par ligne** :
 | `args.get("name")` | lit le champ `name` dans le JSON envoyé par l'IA |
 | `.unwrap_or("monde")` | si l'IA n'a pas envoyé `name`, on salue « monde » (valeur par défaut) |
 | `Ok(serde_json::json!({ … }))` | la **réponse** de l'outil : un objet JSON. `Ok(...)` = tout s'est bien passé |
-| `.bind("127.0.0.1:8080")?` | ouvre le socket sur votre machine (127.0.0.1 = accessible uniquement en local) |
+| `.bind("127.0.0.1:23080")?` | ouvre le socket sur votre machine (127.0.0.1 = accessible uniquement en local), sur **23080** — le port par défaut de LiteMCP |
 | `.serve()` | fait tourner le serveur — le programme reste ici, en attente d'appels |
+
+> 💡 **Pourquoi 23080 et pas le classique 8080 ?** 23080 est le port par
+> défaut de LiteMCP (`litemcp::DEFAULT_ADDRESS`). 8080 est le port
+> HTTP-alternatif le plus squatté (proxys, Tomcat, serveurs de dev) :
+> collisions quasi garanties sur une machine de développement. 23080 est
+> non attribué par l'IANA et **sous** les plages éphémères de l'OS, qui ne
+> vous le volera donc jamais. Pour plusieurs serveurs côte à côte, ne
+> choisissez rien à la main : `.bind_default()` prend le premier port
+> libre de la tranche LiteMCP `23080–23099`.
 
 L'outil `hello` est né. Passons au test.
 
@@ -294,7 +303,7 @@ target\release\mon-premier-mcp.exe
 ```
 
 ```
-Mon premier MCP écoute sur http://127.0.0.1:8080/mcp
+Mon premier MCP écoute sur http://127.0.0.1:23080/mcp
 ```
 
 Votre app tourne dans sa fenêtre : **un seul fichier, aucune dépendance à
@@ -322,8 +331,17 @@ avec un objet JSON qui dit ce qu'il veut. Testons les deux requêtes fondamental
 
 Dans le second terminal :
 
+> 🪟 **Sous Windows (PowerShell ou cmd)** : les commandes ci-dessous sont
+> écrites pour bash (retours à la ligne `\`, guillemets simples). Deux
+> façons éprouvées de les faire tourner telles quelles : mettez le corps
+> JSON dans un fichier (disons `req.json`) et remplacez le `-d '…'` par
+> `-d "@req.json"`, ou écrivez l'appel **sur une seule ligne** en
+> échappant chaque guillemet interne (`-d "{\"jsonrpc\":\"2.0\",…}"`).
+> Et sous PowerShell, invoquez `curl.exe` : `curl` tout court y est un
+> alias d'un autre outil.
+
 ```bash
-curl -s http://127.0.0.1:8080/mcp \
+curl -s http://127.0.0.1:23080/mcp \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"hello","arguments":{"name":"Alex"}}}'
 ```
@@ -359,7 +377,7 @@ sous forme de texte, pour les clients qui préfèrent afficher du texte.
 Essayez sans argument — la valeur par défaut prend le relais :
 
 ```bash
-curl -s http://127.0.0.1:8080/mcp \
+curl -s http://127.0.0.1:23080/mcp \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hello","arguments":{}}}'
 # → {"message":"Bonjour, monde !"}
@@ -373,7 +391,7 @@ en-têtes et un petit bloc `_meta`. C'est ce que font les clients MCP récents,
 tout seuls. À la main, le même appel s'écrit :
 
 ```bash
-curl -s http://127.0.0.1:8080/mcp \
+curl -s http://127.0.0.1:23080/mcp \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json' \
   -H 'MCP-Protocol-Version: 2026-07-28' \
@@ -388,8 +406,9 @@ accepte cette forme complète **et** la forme courte utilisée dans ce tuto,
 
 > ⚠️ **Vous recevez `400` avec `-32020 MCP-Protocol-Version header is required` ?**
 > Votre serveur est en profil strict : il manque `.legacy(true)` dans le
-> code (étape 3), ou alors envoyez la forme complète ci-dessus. Et
-> `404` + `-32601` sur `initialize` a la même cause.
+> code (étape 3), ou alors envoyez la forme complète ci-dessus. Même cause
+> pour un `initialize` refusé : `400` + `-32020` s'il est envoyé nu,
+> `404` + `-32601` une fois les en-têtes complets.
 
 > 🔄 Le protocole MCP et LiteMCP évoluent vite : si une commande de cette
 > page ne répond plus comme indiqué, la référence à jour est le
@@ -402,7 +421,7 @@ C'est **la première chose que fait un client IA** quand il se connecte :
 il demande le catalogue pour savoir ce qui existe.
 
 ```bash
-curl -s http://127.0.0.1:8080/mcp \
+curl -s http://127.0.0.1:23080/mcp \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":3,"method":"tools/list"}'
 ```
@@ -413,17 +432,21 @@ Réponse (abrégée) :
 {"jsonrpc":"2.0","id":3,"result":{"tools":[
   {"name":"hello",
    "description":"Dit bonjour à quelqu'un",
-   "inputSchema":{"type":"object","properties":{...}}}
+   "inputSchema":{"type":"object"}}
 ]}}
 ```
 
-L'IA reçoit le nom, la description **et** le schéma des arguments : elle sait
-tout ce qu'il faut pour appeler `hello` correctement.
+L'IA reçoit le nom, la description et le schéma des arguments. Pour `hello`,
+déclaré avec le registre brut `.tool`, ce schéma est `{"type":"object"}`
+sans propriété : la seule documentation du champ `name`, c'est la
+description. Les registres `tool_parse` / `tool_typed` de l'étape 7
+publient, eux, un schéma complet — bornes, champs requis — et le valident
+avant l'exécution.
 
 ### Bonus : la sonde de vie
 
 ```bash
-curl -s http://127.0.0.1:8080/health
+curl -s http://127.0.0.1:23080/health
 # ok
 ```
 
@@ -454,8 +477,8 @@ C'est une **application** : tu télécharges, tu double-cliques, elle s'ouvre.
 | Ton système | Clique pour télécharger |
 |:--:|---|
 | 🪟 **Windows** 10 / 11 | **[⬇ mcp-control-desktop-windows-x86_64-setup.exe](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-windows-x86_64-setup.exe)** — installateur (~3 Mo) |
-| 🐧 **Linux** (64 bits) | **[⬇ mcp-control-desktop-linux-x86_64](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-linux-x86_64)** · ~21 Mo |
-| 🍎 **macOS** — Intel **et** Apple Silicon (M1→M4) | **[⬇ mcp-control-desktop-macos-universal](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-macos-universal)** · ~32 Mo |
+| 🐧 **Linux** (64 bits) | **[⬇ mcp-control-desktop-linux-x86_64](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-linux-x86_64)** · ~25 Mo |
+| 🍎 **macOS** — Intel **et** Apple Silicon (M1→M4) | **[⬇ mcp-control-desktop-macos-universal](https://github.com/DeamonDev888/mcp-control/releases/latest/download/mcp-control-desktop-macos-universal)** · ~36 Mo |
 
 Sous Windows, l'installateur t'accompagne (langue, dossier, raccourcis), puis
 **la fenêtre de l'application s'ouvre** comme n'importe quelle app ; sur
@@ -465,16 +488,17 @@ Exécuter quand même » pour une application non signée ; sur macOS : clic dro
 sur le fichier → **Ouvrir**.)
 
 > ⬆️ **Mises à jour sans y penser** : dès qu'une nouvelle version sort, un
-> bouton **« Mettre à jour » bleu ciel** apparaît en haut de la fenêtre — un
-> clic ouvre la page de téléchargement. L'app se vérifie au lancement puis
-> chaque heure, toute seule.
+> bouton **« Mettre à jour »** apparaît en haut de la fenêtre — un clic
+> télécharge la nouvelle version, vérifie son empreinte SHA-256, l'installe
+> et relance l'app tout seul (repli : la page de téléchargement). L'app se
+> vérifie au lancement puis chaque heure, toute seule.
 
 > 📦 **Toutes les versions** (historique, notes de version, code source) :
 > [github.com/DeamonDev888/mcp-control/releases](https://github.com/DeamonDev888/mcp-control/releases)
 >
 > Les liens ci-dessus pointent toujours vers la **dernière version publiée** —
-> ils ne se périment pas. Cette étape a été relue avec **MCP Control v0.8.0**
-> (22 novembre 2026).
+> ils ne se périment pas. Cette étape a été relue avec **MCP Control v0.8.7**
+> (23 novembre 2026).
 >
 > 🖥️ **Serveur sans écran ?** Chaque version fournit aussi un binaire en ligne
 > de commande : `mcp-control-cli-windows-x86_64.exe`,
@@ -490,7 +514,7 @@ Dans le panneau de gauche, cliquez sur **« + Ajouter un serveur »** :
 
 1. **Transport** : `HTTP (streamable)` ;
 2. **Nom affiché** : `mon-premier-mcp` ;
-3. **Port** : `8080` — **Chemin MCP** : `/mcp` (déjà prérempli) ;
+3. **Port** : `23080` — **Chemin MCP** : `/mcp` (déjà prérempli) ;
 4. **Commande de lancement** — c'est ici que votre app devient une vraie app :
    * **Programme** : le chemin du binaire compilé à l'étape 4
      (`target\release\mon-premier-mcp.exe` sous Windows,
@@ -510,9 +534,12 @@ machine. Le port et l'adresse restent des
 détails internes — tout se pilote depuis l'interface, **comme une vraie
 application**.
 
-> 💡 Le bouton **« 🔍 Scanner les ports locaux »** découvre tout seul les serveurs MCP de la
-> plage configurée (3000-3200 par défaut) — élargissez-la dans les réglages si vos serveurs
-> écoutent ailleurs. Il sonde aussi les autres machines du LAN (et par SSH).
+> 💡 Le bouton **« 🔍 Scanner les ports locaux »** balaie la plage configurée
+> (3000–3200 par défaut, réglable). Votre serveur est sur 23080, hors de
+> cette plage — et il est quand même détecté : au démarrage (et à chaque
+> rafraîchissement), MCP Control sonde **tous les ports en écoute** de la
+> machine, sans plage à deviner. Il sonde aussi les autres machines du LAN
+> (et par SSH).
 
 ### Ce que vous devez voir
 
@@ -539,9 +566,9 @@ MCP Control **continue de superviser** : état, latence et journal en continu, s
 machines.
 
 > 💡 **Alternative officielle** : `npx @modelcontextprotocol/inspector` (l'inspecteur du protocole,
-> transport « Streamable HTTP », URL `http://127.0.0.1:8080/mcp`) fait le même travail de découverte
+> transport « Streamable HTTP », URL `http://127.0.0.1:23080/mcp`) fait le même travail de découverte
 > en ponctuel. MCP Control va plus loin : supervision continue, détection multi-machines
-> (LAN, SSH), boutique de 63 MCP installables en un clic, 38 frameworks reconnus.
+> (LAN, SSH), boutique d'environ 90 MCP installables en un clic, 38 frameworks reconnus.
 
 ### 🌉 Bonus — le mode gateway : votre agent pilote tout, avec UNE ligne de config
 
@@ -569,10 +596,10 @@ Dans Claude Desktop (ou tout client MCP standard) :
 }
 ```
 
-Dans Hermes Agent (config.yaml) :
+Dans Hermes Agent (config.yaml, sous `mcp_servers:`) :
 
 ```yaml
-mcp:
+mcp_servers:
   mcp-control:
     command: mcp-control
     args: ["bridge"]
@@ -647,13 +674,13 @@ Relancez l'app pour prendre en compte le nouvel outil (`Ctrl+C`, puis relancez
 le binaire — ou simplement `cargo run` tant que vous développez) et testez :
 
 ```bash
-curl -s http://127.0.0.1:8080/mcp \
+curl -s http://127.0.0.1:23080/mcp \
   -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"analyze","arguments":{"text":"le rust c est fort"}}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"analyze","arguments":{"text":"le rust c est fort"}}}'
 ```
 
 ```json
-{"jsonrpc":"2.0","id":1,"result":{"structuredContent":{"words":5,"chars":18,"longest":"fort"}}}
+{"jsonrpc":"2.0","id":1,"result":{"structuredContent":{"chars":18,"longest":"fort","words":5}}}
 ```
 
 Notez le gain côté code : `args.text` est un vrai `String`, `args.uppercase`
@@ -665,7 +692,7 @@ Le schéma est **exécuté avant** votre fonction. Texte vide, texte trop long,
 champ inconnu — votre code n'est jamais appelé. Testez :
 
 ```bash
-curl -s http://127.0.0.1:8080/mcp \
+curl -s http://127.0.0.1:23080/mcp \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"analyze","arguments":{"text":""}}}'
 ```
@@ -708,20 +735,22 @@ la valeur est **publiée** dans le schéma (`"default": …`) — l'IA la voit
 dans `tools/list` — et si l'IA n'envoie pas le champ, elle est
 **injectée** dans les arguments **avant** l'exécution de votre handler.
 
-Le schéma publié le dit maintenant à l'IA :
+Le schéma publié le dit maintenant à l'IA (la forme `["boolean","null"]`
+est normale : un champ optionnel accepte aussi `null`, équivalent à
+l'absence) :
 
 ```json
-{"uppercase":{"default":false,"type":"boolean"}}
+{"uppercase":{"default":false,"type":["boolean","null"]}}
 ```
 
 et un appel **sans** `uppercase` fonctionne sans que votre code ait à
 douter :
 
 ```bash
-curl -s http://127.0.0.1:8080/mcp \
+curl -s http://127.0.0.1:23080/mcp \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"analyze","arguments":{"text":"bonjour"}}}'
-# → {"words":1,"chars":7,"longest":"bonjour"}   (pas d'erreur : le défaut est injecté)
+# → {"chars":7,"longest":"bonjour","words":1}   (pas d'erreur : le défaut est injecté)
 ```
 
 > 💡 Deux détails qui font la différence :
@@ -739,8 +768,8 @@ curl -s http://127.0.0.1:8080/mcp \
 > deux schémas plus complets, utiles dès que vos outils se compliquent.
 
 **`zod::record(valeur)`** — un objet dont les **clés sont libres** mais
-dont les **valeurs sont typées** (un dictionnaire). Il faut d'abord le
-type des arguments :
+dont les **valeurs sont typées** (un dictionnaire). Il faut d'abord
+déclarer le type des arguments :
 
 ```rust
 use std::collections::HashMap;
@@ -818,12 +847,12 @@ Ajoutons l'exemple classique — la division :
 
 ```bash
 # Ça marche :
-curl -s http://127.0.0.1:8080/mcp -H 'Content-Type: application/json' \
+curl -s http://127.0.0.1:23080/mcp -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"divide","arguments":{"a":10,"b":4}}}'
 # → {"structuredContent":{"quotient":2.5}}
 
 # Et la division par zéro échoue PROPREMENT :
-curl -s http://127.0.0.1:8080/mcp -H 'Content-Type: application/json' \
+curl -s http://127.0.0.1:23080/mcp -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"divide","arguments":{"a":10,"b":0}}}'
 # → {"result":{"resultType":"complete","isError":true,"structuredContent":
 #     {"error":{"code":"unclassified","message":"division par zéro","retryable":false}}}}   (content omis)
@@ -865,7 +894,7 @@ Et dans la chaîne :
 Appelez-le plusieurs fois :
 
 ```bash
-curl -s http://127.0.0.1:8080/mcp -H 'Content-Type: application/json' \
+curl -s http://127.0.0.1:23080/mcp -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"counter","arguments":{}}}'
 # → {"count":1}   … puis {"count":2}, {"count":3}, …
 ```
@@ -929,15 +958,15 @@ fn main() -> std::io::Result<()> {
     ServerBuilder::new("mon-premier-mcp", "0.1.0")
         .legacy(true)
         .with_tool(register_add)   // la macro a généré register_add
-        .bind("127.0.0.1:8080")?
+        .bind("127.0.0.1:23080")?
         .serve()
 }
 ```
 
 Types supportés : entiers, `f32`/`f64`, `bool`, `String`, `Option<T>`
 (champ optionnel), `Vec<T>`. Même principe pour `#[resource]` et `#[prompt]`
-(les deux autres registres MCP) — voir le
-[README de LiteMCP](https://github.com/DeamonDev888/litemcp#macros-tool--resource--prompt-feature-macros).
+(les deux autres registres MCP) — voir la section
+[Features Cargo du README de LiteMCP](https://github.com/DeamonDev888/litemcp#features-cargo).
 
 ---
 
@@ -958,25 +987,25 @@ d'adresse ni de JSON.
 {
   "mcpServers": {
     "mon-premier-mcp": {
-      "url": "http://localhost:8080/mcp"
+      "url": "http://localhost:23080/mcp"
     }
   }
 }
 ```
 
-### Hermes Agent (config.yaml)
+### Hermes Agent (config.yaml, sous `mcp_servers:`)
 
 ```yaml
-mcp:
+mcp_servers:
   mon-premier-mcp:
-    url: "http://localhost:8080/mcp"
+    url: "http://localhost:23080/mcp"
 ```
 
 ### MCP Control
 
 Le [MCP Control](https://github.com/DeamonDev888/mcp-control)
-reconnaît les serveurs LiteMCP **par fingerprint** (sonde `/health` + version
-de protocole) et les badgen automatiquement : état, liste des tools, latence,
+reconnaît les serveurs LiteMCP **par fingerprint** (réponse à `initialize` +
+sonde `GET /health` « ok ») et les badgen automatiquement : état, liste des tools, latence,
 journal — sans rien ajouter à votre code.
 
 > 🌉 **Encore plus simple pour l'agent** : branchez-le une seule fois sur le
@@ -1000,8 +1029,8 @@ l'appeler grâce au schéma publié par `tools/list`. C'est toute la magie de MC
 
 * **Le code complet** de ce tuto (les 4 outils + annotations, prêt à compiler) :
   dossier [`mon-premier-mcp/`](./mon-premier-mcp) de ce dépôt — il accepte en
-  plus une adresse en argument (`mon-premier-mcp.exe 127.0.0.1:8180`) si le port
-  8080 est déjà occupé sur votre machine ;
+  plus une adresse en argument (`mon-premier-mcp.exe 127.0.0.1:23081`) si le
+  port 23080 est déjà pris (23081 est le port suivant de la tranche LiteMCP) ;
 * **Options du serveur** (chemin de route, timeouts, plafond de connexions,
   arrêt propre) : [README LiteMCP, section Configuration](https://github.com/DeamonDev888/litemcp#configuration-et-valeurs-par-défaut) ;
 * **Sécurité** : il n'y a pas de bind implicite — `.bind(adresse)` est explicite,
